@@ -163,6 +163,9 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Built Magnet Studio: multi-file upload (drag&drop + tap), gallery of realistic square magnet mockups with metallic frame, per-image Editor modal (zoom 1x-3x, rotate -180/+180, drag-to-pan with pointer events, 5 filters: Original/Auto-Enhance/Brighten/Vibrant/Pastel Pop). Live configured count, Buy10Get1 free promo unlock, clicking Use these scrolls to order form and pre-fills the quantity. Fully client-side."
+      - working: "NA"
+        agent: "main"
+        comment: "MAJOR OVERHAUL of the Design magnet editor: (1) Print-accurate 70x70mm crop area with a visible 65x65mm safe-zone mask + dimmed 2.5mm bleed edge + rounded corner outline + info tooltip 'Phần rìa mờ sẽ được gấp ra mặt sau...'. (2) Full manual controls: pan (single-finger drag), pinch-to-zoom with two fingers, two-finger rotate, wheel-zoom on desktop, plus Zoom & Rotate sliders. (3) Adjustment sliders: Brightness, Contrast, White Balance (warmth). (4) Prominent AI Auto-Enhance button that reads image histogram (128x128 sample) and auto-computes brightness/contrast/warmth. (5) Save renders a full-res 826x826 (70mm@300DPI) JPEG blob via canvas 2D ctx.filter and stores it on the item as outputBlob + outputUrl for later upload to GAS/Drive. Grid preview now shows the baked 65x65 visible region if saved. Bilingual EN+VI."
 
 metadata:
   created_by: "main_agent"

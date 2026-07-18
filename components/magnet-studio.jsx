@@ -9,14 +9,26 @@ import { Slider } from '@/components/ui/slider'
 import {
   Upload, X, Sparkles, RotateCw, ZoomIn, Check, Trash2, ImagePlus,
   CheckCircle2, ArrowRight, Wand2, Sun as SunIcon, Palette, Droplet,
+  Info, SunMedium, Contrast as ContrastIcon, Thermometer,
 } from 'lucide-react'
 
-const FILTERS = {
-  none:    { label: 'none',    css: 'none' },
-  auto:    { label: 'auto',    css: 'contrast(1.15) saturate(1.15) brightness(1.05)' },
-  bright:  { label: 'bright',  css: 'brightness(1.18) contrast(1.05) saturate(1.05)' },
-  vibrant: { label: 'vibrant', css: 'saturate(1.6) contrast(1.12) brightness(1.02)' },
-  pastel:  { label: 'pastel',  css: 'saturate(0.85) brightness(1.08) contrast(0.95) sepia(0.08)' },
+// ---- Print constants ----
+const MM_TOTAL = 70            // full print size (bleed included)
+const MM_VISIBLE = 65          // visible face size (rest folds to back)
+const OUT_PX = 826             // 70mm @ 300 DPI  (70 / 25.4 * 300 ≈ 826.77)
+const VISIBLE_FRACTION = MM_VISIBLE / MM_TOTAL // 0.9286
+const BLEED_FRACTION = (MM_TOTAL - MM_VISIBLE) / 2 / MM_TOTAL // 0.0357 per edge
+// Visible corner radius (mm) roughly 4mm
+const VISIBLE_RADIUS_MM = 4
+const VISIBLE_RADIUS_PCT = (VISIBLE_RADIUS_MM / MM_VISIBLE) * 100
+
+// ---- Filter presets (stacked on top of user adjustments) ----
+const FILTER_PRESETS = {
+  none:    { label: 'none',    css: '' },
+  auto:    { label: 'auto',    css: 'saturate(1.15)' },
+  bright:  { label: 'bright',  css: 'saturate(1.08)' },
+  vibrant: { label: 'vibrant', css: 'saturate(1.6)' },
+  pastel:  { label: 'pastel',  css: 'saturate(0.85) sepia(0.1)' },
 }
 
 const FILTER_ICONS = {
@@ -27,23 +39,90 @@ const FILTER_ICONS = {
   pastel: Palette,
 }
 
-const DEFAULT_ADJUST = { zoom: 1, rotate: 0, x: 0, y: 0, filter: 'none', configured: false }
+const DEFAULT_ADJUST = {
+  panX: 0, panY: 0,           // fraction of viewport (-0.6..0.6)
+  zoom: 1,                    // multiplier on baseScale (cover-fit)
+  rotate: 0,                  // degrees
+  brightness: 1,              // 0.5..1.5
+  contrast: 1,                // 0.5..1.6
+  warmth: 0,                  // -1..+1 (negative cool, positive warm)
+  filter: 'none',
+  configured: false,
+}
 
 const uid = () => Math.random().toString(36).slice(2, 10)
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 
-// A realistic square magnet preview: photo inside a rounded square with metallic ring + soft shadow on a metallic bg
+// Build a filter string for both live preview and canvas output
+function buildFilterString(adjust) {
+  const parts = []
+  parts.push(`brightness(${adjust.brightness})`)
+  parts.push(`contrast(${adjust.contrast})`)
+  if (adjust.warmth > 0) parts.push(`sepia(${(adjust.warmth * 0.35).toFixed(3)})`)
+  if (adjust.warmth < 0) parts.push(`hue-rotate(${(adjust.warmth * 25).toFixed(1)}deg)`)
+  const p = FILTER_PRESETS[adjust.filter]?.css
+  if (p) parts.push(p)
+  return parts.join(' ')
+}
+
+// Compute base scale to "cover" viewport
+function baseCoverScale(imgW, imgH, viewport) {
+  if (!imgW || !imgH) return 1
+  return Math.max(viewport / imgW, viewport / imgH)
+}
+
+// ==================================================================
+// SMALL MAGNET PREVIEW (used in grid cards)
+// ==================================================================
 function MagnetPreview({ item, sizeClass = 'w-full aspect-square' }) {
-  const f = FILTERS[item.adjust.filter] || FILTERS.none
+  // If the user has saved a baked output, show that image.
+  if (item.outputUrl) {
+    return (
+      <div className={`relative ${sizeClass} rounded-2xl overflow-hidden`}>
+        {/* Metallic backdrop */}
+        <div className="absolute inset-0" style={{
+          background: 'radial-gradient(120% 90% at 20% 10%, #fff7e6 0%, #f2e4c9 45%, #d9c7a1 100%)',
+        }} />
+        {/* Visible magnet face (65/70 of the container) */}
+        <div
+          className="absolute overflow-hidden shadow-[0_10px_25px_-8px_rgba(120,80,20,0.35),inset_0_0_0_2px_rgba(255,255,255,0.6),inset_0_0_0_4px_rgba(220,180,90,0.4)] bg-black"
+          style={{
+            inset: `${BLEED_FRACTION * 100}%`,
+            borderRadius: `${VISIBLE_RADIUS_PCT / 6}%`, // small rounded
+          }}
+        >
+          {/* Only the visible portion of the printed image should show here.
+              The baked image is 70x70 so we shift left/up by BLEED_FRACTION and scale up. */}
+          <div className="absolute inset-0 overflow-hidden">
+            <img
+              src={item.outputUrl}
+              alt=""
+              className="absolute h-auto w-auto"
+              style={{
+                width: `${100 / VISIBLE_FRACTION}%`,
+                height: `${100 / VISIBLE_FRACTION}%`,
+                left: `${-BLEED_FRACTION * 100 / VISIBLE_FRACTION}%`,
+                top: `${-BLEED_FRACTION * 100 / VISIBLE_FRACTION}%`,
+                maxWidth: 'none',
+              }}
+              draggable={false}
+            />
+          </div>
+          {/* Gloss */}
+          <div className="pointer-events-none absolute inset-0"
+            style={{ background: 'linear-gradient(120deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(0,0,0,0.15) 100%)' }} />
+        </div>
+      </div>
+    )
+  }
+
+  // Fallback: live transform preview
+  const filterCss = buildFilterString(item.adjust)
   return (
     <div className={`relative ${sizeClass} rounded-2xl overflow-hidden`}>
-      {/* metallic-ish bg */}
-      <div className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(120% 90% at 20% 10%, #fff7e6 0%, #f2e4c9 45%, #d9c7a1 100%)',
-        }}
-      />
-      {/* the "magnet" surface */}
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(120% 90% at 20% 10%, #fff7e6 0%, #f2e4c9 45%, #d9c7a1 100%)',
+      }} />
       <div className="absolute inset-[8%] rounded-xl overflow-hidden shadow-[0_10px_25px_-8px_rgba(120,80,20,0.35),inset_0_0_0_2px_rgba(255,255,255,0.6),inset_0_0_0_4px_rgba(220,180,90,0.4)] bg-black">
         <div className="absolute inset-0 overflow-hidden">
           <img
@@ -51,29 +130,37 @@ function MagnetPreview({ item, sizeClass = 'w-full aspect-square' }) {
             alt=""
             className="absolute left-1/2 top-1/2 h-full w-full object-cover select-none pointer-events-none"
             style={{
-              transform: `translate(-50%, -50%) translate(${item.adjust.x}%, ${item.adjust.y}%) scale(${item.adjust.zoom}) rotate(${item.adjust.rotate}deg)`,
-              filter: f.css,
+              transform: `translate(-50%, -50%) rotate(${item.adjust.rotate}deg) scale(${item.adjust.zoom}) translate(${item.adjust.panX * 100}%, ${item.adjust.panY * 100}%)`,
+              filter: filterCss,
               transition: 'transform 250ms ease, filter 250ms ease',
               maxWidth: 'none',
             }}
             draggable={false}
           />
         </div>
-        {/* subtle gloss */}
-        <div className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(120deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(0,0,0,0.15) 100%)',
-          }}
-        />
       </div>
     </div>
   )
 }
 
+// ==================================================================
+// EDITOR MODAL
+// ==================================================================
 function Editor({ open, item, onClose, onSave, t }) {
   const [adjust, setAdjust] = useState(item?.adjust || DEFAULT_ADJUST)
-  const dragRef = useRef({ dragging: false, startX: 0, startY: 0, baseX: 0, baseY: 0 })
+  const [aiWorking, setAiWorking] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const viewportRef = useRef(null)
+  const imgElRef = useRef(null)
+  const gestureRef = useRef({
+    pointers: new Map(),
+    start: null,
+    startDist: 0,
+    startAngle: 0,
+    startCentroid: { x: 0, y: 0 },
+    baseAdjust: null,
+  })
 
   useEffect(() => {
     if (item) setAdjust(item.adjust || DEFAULT_ADJUST)
@@ -84,54 +171,366 @@ function Editor({ open, item, onClose, onSave, t }) {
   const set = (patch) => setAdjust((a) => ({ ...a, ...patch }))
   const reset = () => setAdjust({ ...DEFAULT_ADJUST })
 
-  const onPointerDown = (e) => {
-    e.currentTarget.setPointerCapture?.(e.pointerId)
-    dragRef.current = {
-      dragging: true,
-      startX: e.clientX,
-      startY: e.clientY,
-      baseX: adjust.x,
-      baseY: adjust.y,
+  // ----- Multi-touch gestures on the viewport -----
+  const refreshGestureBase = () => {
+    const g = gestureRef.current
+    g.baseAdjust = { ...adjustRef.current }
+    const pts = Array.from(g.pointers.values())
+    if (pts.length >= 2) {
+      const [a, b] = pts
+      const dx = b.x - a.x
+      const dy = b.y - a.y
+      g.startDist = Math.hypot(dx, dy) || 1
+      g.startAngle = Math.atan2(dy, dx)
+      g.startCentroid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+    } else if (pts.length === 1) {
+      g.startCentroid = { x: pts[0].x, y: pts[0].y }
     }
   }
-  const onPointerMove = (e) => {
-    if (!dragRef.current.dragging) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const dx = ((e.clientX - dragRef.current.startX) / rect.width) * 100
-    const dy = ((e.clientY - dragRef.current.startY) / rect.height) * 100
-    set({
-      x: Math.max(-60, Math.min(60, dragRef.current.baseX + dx)),
-      y: Math.max(-60, Math.min(60, dragRef.current.baseY + dy)),
-    })
-  }
-  const onPointerUp = () => { dragRef.current.dragging = false }
 
-  const filterKeys = Object.keys(FILTERS)
+  // Keep a mutable ref of latest adjust so gesture handlers see it
+  const adjustRef = useRef(adjust)
+  useEffect(() => { adjustRef.current = adjust }, [adjust])
+
+  const onPointerDown = (e) => {
+    if (!viewportRef.current) return
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    const rect = viewportRef.current.getBoundingClientRect()
+    gestureRef.current.pointers.set(e.pointerId, {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    })
+    refreshGestureBase()
+  }
+
+  const onPointerMove = (e) => {
+    const g = gestureRef.current
+    if (!g.pointers.has(e.pointerId) || !viewportRef.current || !g.baseAdjust) return
+    const rect = viewportRef.current.getBoundingClientRect()
+    g.pointers.set(e.pointerId, {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    })
+    const pts = Array.from(g.pointers.values())
+    const vp = rect.width
+
+    if (pts.length === 1) {
+      const p = pts[0]
+      const dx = (p.x - g.startCentroid.x) / vp
+      const dy = (p.y - g.startCentroid.y) / vp
+      setAdjust((a) => ({
+        ...a,
+        panX: clamp(g.baseAdjust.panX + dx, -0.8, 0.8),
+        panY: clamp(g.baseAdjust.panY + dy, -0.8, 0.8),
+      }))
+    } else if (pts.length >= 2) {
+      const [a, b] = pts
+      const dx = b.x - a.x
+      const dy = b.y - a.y
+      const dist = Math.hypot(dx, dy) || 1
+      const angle = Math.atan2(dy, dx)
+      const cx = (a.x + b.x) / 2
+      const cy = (a.y + b.y) / 2
+
+      const ratio = dist / g.startDist
+      const angleDeltaDeg = ((angle - g.startAngle) * 180) / Math.PI
+      const panDx = (cx - g.startCentroid.x) / vp
+      const panDy = (cy - g.startCentroid.y) / vp
+
+      setAdjust((prev) => ({
+        ...prev,
+        zoom: clamp(g.baseAdjust.zoom * ratio, 0.5, 5),
+        rotate: g.baseAdjust.rotate + angleDeltaDeg,
+        panX: clamp(g.baseAdjust.panX + panDx, -0.8, 0.8),
+        panY: clamp(g.baseAdjust.panY + panDy, -0.8, 0.8),
+      }))
+    }
+  }
+
+  const onPointerUp = (e) => {
+    const g = gestureRef.current
+    g.pointers.delete(e.pointerId)
+    refreshGestureBase()
+  }
+
+  const onWheel = (e) => {
+    if (!e.ctrlKey && Math.abs(e.deltaY) < 2) return
+    e.preventDefault()
+    const factor = e.deltaY < 0 ? 1.08 : 0.92
+    setAdjust((a) => ({ ...a, zoom: clamp(a.zoom * factor, 0.5, 5) }))
+  }
+
+  // ----- AI Auto-Enhance: analyze histogram -----
+  const runAiEnhance = async () => {
+    setAiWorking(true)
+    try {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.src = item.url
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej })
+
+      const S = 128
+      const c = document.createElement('canvas')
+      c.width = S; c.height = S
+      const ctx = c.getContext('2d')
+      // draw scaled
+      const scale = Math.min(S / img.naturalWidth, S / img.naturalHeight)
+      const dw = img.naturalWidth * scale
+      const dh = img.naturalHeight * scale
+      ctx.drawImage(img, (S - dw) / 2, (S - dh) / 2, dw, dh)
+      const data = ctx.getImageData(0, 0, S, S).data
+
+      let sumL = 0, sumR = 0, sumG = 0, sumB = 0, count = 0
+      const hist = new Array(256).fill(0)
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2], al = data[i + 3]
+        if (al < 8) continue
+        const l = 0.299 * r + 0.587 * g + 0.114 * b
+        hist[Math.round(l)]++
+        sumL += l; sumR += r; sumG += g; sumB += b; count++
+      }
+      if (count < 1) return
+      const avgL = sumL / count
+      const avgR = sumR / count
+      const avgB = sumB / count
+
+      // 2nd/98th percentile luminance
+      let acc = 0, lo = 0, hi = 255
+      const need = count * 0.02
+      for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc >= need) { lo = i; break } }
+      acc = 0
+      const needHi = count * 0.02
+      for (let i = 255; i >= 0; i--) { acc += hist[i]; if (acc >= needHi) { hi = i; break } }
+      const spread = Math.max(1, hi - lo)
+
+      // Compute suggested values
+      let brightness = clamp(140 / Math.max(20, avgL), 0.9, 1.35)
+      let contrast = clamp(220 / spread, 1.0, 1.6)
+      // Warmth: if too blue, warm it up; if too red, cool down
+      const rb = avgR - avgB
+      let warmth = clamp(-rb / 60, -0.35, 0.35) * -1 // if R>B (already warm) push cooler, else warmer
+      // Actually simpler: if scene is bluish (B > R), add warmth
+      warmth = clamp((avgB - avgR) / 90, -0.35, 0.35)
+
+      setAdjust((a) => ({
+        ...a,
+        brightness: +brightness.toFixed(3),
+        contrast: +contrast.toFixed(3),
+        warmth: +warmth.toFixed(3),
+        filter: 'auto',
+      }))
+    } catch (err) {
+      console.warn('AI enhance failed', err)
+    } finally {
+      setAiWorking(false)
+    }
+  }
+
+  // ----- Render to hi-res canvas & bake output blob -----
+  const bakeOutput = () => new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = OUT_PX
+        canvas.height = OUT_PX
+        const ctx = canvas.getContext('2d')
+        // Fill with black in case image doesn't cover corners
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, 0, OUT_PX, OUT_PX)
+
+        const base = baseCoverScale(img.naturalWidth, img.naturalHeight, OUT_PX)
+        const s = base * adjust.zoom
+
+        ctx.filter = buildFilterString(adjust) || 'none'
+
+        // Transform pipeline (same as CSS preview):
+        // 1. Move to center of canvas
+        // 2. Rotate
+        // 3. Scale
+        // 4. Translate by pan (in image local units after scale/rotate)
+        // Note: In CSS we had `translate(-50%,-50%) rotate() scale() translate(panX%, panY%)`
+        // The last translate is expressed as % of the image's own displayed size (post scale/rotate).
+        // In canvas we replicate: after translating to center, we rotate & scale then translate by
+        // (panX * displayedImageWidth, panY * displayedImageHeight) BUT since scale is applied
+        // to that translate too, we translate in image-local coords by (panX * imgNaturalW, panY * imgNaturalH).
+        ctx.translate(OUT_PX / 2, OUT_PX / 2)
+        ctx.rotate((adjust.rotate * Math.PI) / 180)
+        ctx.scale(s, s)
+        ctx.translate(adjust.panX * img.naturalWidth, adjust.panY * img.naturalHeight)
+        ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2)
+
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error('toBlob failed'))
+          resolve(blob)
+        }, 'image/jpeg', 0.92)
+      } catch (e) { reject(e) }
+    }
+    img.onerror = reject
+    img.src = item.url
+  })
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const blob = await bakeOutput()
+      const outputUrl = URL.createObjectURL(blob)
+      onSave({ adjust: { ...adjust, configured: true }, outputBlob: blob, outputUrl })
+    } catch (err) {
+      console.error(err)
+      // still save adjust so user isn't stuck
+      onSave({ adjust: { ...adjust, configured: true } })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const filterCss = buildFilterString(adjust)
+  const filterKeys = Object.keys(FILTER_PRESETS)
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden">
+      <DialogContent className="max-w-3xl p-0 overflow-hidden max-h-[92vh] overflow-y-auto">
         <DialogHeader className="px-5 pt-5 pb-2">
           <DialogTitle className="text-lg font-bold flex items-center gap-2">
             <Wand2 className="h-4 w-4 text-orange-500" /> {t.studio.editor.title}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="px-5 pb-5 space-y-4">
-          <div
-            className="relative w-full max-w-sm mx-auto aspect-square rounded-2xl overflow-hidden touch-none cursor-grab active:cursor-grabbing"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            onPointerLeave={onPointerUp}
-          >
-            <MagnetPreview item={{ ...item, adjust }} />
-            <div className="pointer-events-none absolute inset-x-6 top-2 text-center text-[10px] uppercase tracking-widest text-amber-900/60 bg-white/60 backdrop-blur px-2 py-1 rounded-full inline-block mx-auto w-fit left-1/2 -translate-x-1/2">
-              {t.studio.editor.pan}
+        <div className="px-4 md:px-5 pb-5 space-y-4">
+          {/* ========== Canvas Viewport ========== */}
+          <div className="relative w-full max-w-md mx-auto">
+            <div
+              ref={viewportRef}
+              className="relative aspect-square w-full rounded-2xl overflow-hidden bg-neutral-900 select-none"
+              style={{ touchAction: 'none' }}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              onWheel={onWheel}
+            >
+              {/* The 70x70mm crop = entire viewport */}
+              <img
+                ref={imgElRef}
+                src={item.url}
+                alt=""
+                className="absolute left-1/2 top-1/2 h-full w-full object-cover pointer-events-none"
+                style={{
+                  transform: `translate(-50%, -50%) rotate(${adjust.rotate}deg) scale(${adjust.zoom}) translate(${adjust.panX * 100}%, ${adjust.panY * 100}%)`,
+                  filter: filterCss,
+                  transformOrigin: 'center center',
+                  maxWidth: 'none',
+                  willChange: 'transform, filter',
+                }}
+                draggable={false}
+              />
+
+              {/* Dim overlay for bleed area (2.5mm on each side)
+                  Achieved by two dark rings: a full dark cover + a bright hole */}
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Full dark cover on bleed */}
+                <div className="absolute inset-0 bg-black/55" />
+                {/* Cut-out for the safe/visible area — brighten it back */}
+                <div
+                  className="absolute bg-transparent"
+                  style={{
+                    left: `${BLEED_FRACTION * 100}%`,
+                    top: `${BLEED_FRACTION * 100}%`,
+                    right: `${BLEED_FRACTION * 100}%`,
+                    bottom: `${BLEED_FRACTION * 100}%`,
+                    boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
+                    borderRadius: `${VISIBLE_RADIUS_PCT}%`,
+                    mixBlendMode: 'destination-out',
+                  }}
+                />
+              </div>
+
+              {/* Visible safe-area outline */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  left: `${BLEED_FRACTION * 100}%`,
+                  top: `${BLEED_FRACTION * 100}%`,
+                  right: `${BLEED_FRACTION * 100}%`,
+                  bottom: `${BLEED_FRACTION * 100}%`,
+                  border: '2px solid rgba(255,255,255,0.95)',
+                  borderRadius: `${VISIBLE_RADIUS_PCT}%`,
+                  boxShadow: '0 0 0 1px rgba(0,0,0,0.15) inset',
+                }}
+              />
+
+              {/* Bleed outline (whole viewport) */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  border: '1px dashed rgba(255,255,255,0.55)',
+                }}
+              />
+
+              {/* Corner ticks on safe area */}
+              {[
+                { l: 0, t: 0 },
+                { r: 0, t: 0 },
+                { l: 0, b: 0 },
+                { r: 0, b: 0 },
+              ].map((pos, i) => (
+                <div
+                  key={i}
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: pos.l !== undefined ? `${BLEED_FRACTION * 100}%` : undefined,
+                    right: pos.r !== undefined ? `${BLEED_FRACTION * 100}%` : undefined,
+                    top: pos.t !== undefined ? `${BLEED_FRACTION * 100}%` : undefined,
+                    bottom: pos.b !== undefined ? `${BLEED_FRACTION * 100}%` : undefined,
+                    width: 18, height: 18,
+                    borderTop: pos.t !== undefined ? '3px solid #fff' : undefined,
+                    borderBottom: pos.b !== undefined ? '3px solid #fff' : undefined,
+                    borderLeft: pos.l !== undefined ? '3px solid #fff' : undefined,
+                    borderRight: pos.r !== undefined ? '3px solid #fff' : undefined,
+                  }}
+                />
+              ))}
+
+              {/* Legend chips */}
+              <div className="absolute top-2 left-2 flex gap-1.5 pointer-events-none">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-neutral-800">
+                  {t.studio.editor.safeArea}
+                </span>
+              </div>
+              <div className="absolute top-2 right-2 flex gap-1.5 pointer-events-none">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white">
+                  {t.studio.editor.bleed}
+                </span>
+              </div>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none">
+                <span className="text-[10px] font-medium px-2 py-1 rounded-full bg-white/95 text-neutral-700 shadow">
+                  ✋ {t.studio.editor.pan}
+                </span>
+              </div>
+            </div>
+
+            {/* Bleed info note */}
+            <div className="mt-2 flex items-start gap-2 text-[11px] text-neutral-600 leading-relaxed">
+              <Info className="h-3.5 w-3.5 text-orange-500 mt-0.5 flex-shrink-0" />
+              <span>{t.studio.editor.bleedNote}</span>
             </div>
           </div>
 
+          {/* ========== AI Auto-Enhance ========== */}
+          <Button
+            type="button"
+            onClick={runAiEnhance}
+            disabled={aiWorking}
+            className="w-full h-11 rounded-full bg-gradient-to-r from-fuchsia-500 via-orange-500 to-amber-500 hover:opacity-95 text-white shadow-lg shadow-orange-200 font-semibold"
+          >
+            <Wand2 className="h-4 w-4 mr-2" />
+            {aiWorking ? t.studio.editor.aiEnhancing : t.studio.editor.aiEnhance}
+            <span className="ml-2 text-[10px] font-bold bg-white/25 rounded-full px-1.5 py-0.5">AI</span>
+          </Button>
+
+          {/* ========== Zoom / Rotate ========== */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <div className="flex items-center justify-between text-xs font-semibold text-neutral-700 mb-1">
@@ -139,7 +538,7 @@ function Editor({ open, item, onClose, onSave, t }) {
                 <span className="tabular-nums text-neutral-500">{adjust.zoom.toFixed(2)}x</span>
               </div>
               <Slider
-                min={1} max={3} step={0.01}
+                min={0.5} max={4} step={0.01}
                 value={[adjust.zoom]}
                 onValueChange={(v) => set({ zoom: v[0] })}
               />
@@ -147,7 +546,7 @@ function Editor({ open, item, onClose, onSave, t }) {
             <div>
               <div className="flex items-center justify-between text-xs font-semibold text-neutral-700 mb-1">
                 <span className="flex items-center gap-1"><RotateCw className="h-3.5 w-3.5" /> {t.studio.editor.rotate}</span>
-                <span className="tabular-nums text-neutral-500">{adjust.rotate}&deg;</span>
+                <span className="tabular-nums text-neutral-500">{Math.round(adjust.rotate)}°</span>
               </div>
               <Slider
                 min={-180} max={180} step={1}
@@ -157,6 +556,37 @@ function Editor({ open, item, onClose, onSave, t }) {
             </div>
           </div>
 
+          {/* ========== Adjustments ========== */}
+          <div className="rounded-2xl border border-amber-100 bg-amber-50/40 p-3 md:p-4">
+            <div className="text-xs font-bold text-amber-900 uppercase tracking-wider mb-3 flex items-center gap-1">
+              <Sparkles className="h-3.5 w-3.5" /> {t.studio.editor.adjustments}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <AdjustSlider
+                icon={SunMedium} label={t.studio.editor.brightness}
+                value={adjust.brightness}
+                min={0.5} max={1.6} step={0.01}
+                onChange={(v) => set({ brightness: v })}
+                fmt={(v) => `${Math.round((v - 1) * 100)}`}
+              />
+              <AdjustSlider
+                icon={ContrastIcon} label={t.studio.editor.contrast}
+                value={adjust.contrast}
+                min={0.5} max={1.8} step={0.01}
+                onChange={(v) => set({ contrast: v })}
+                fmt={(v) => `${Math.round((v - 1) * 100)}`}
+              />
+              <AdjustSlider
+                icon={Thermometer} label={t.studio.editor.warmth}
+                value={adjust.warmth}
+                min={-1} max={1} step={0.01}
+                onChange={(v) => set({ warmth: v })}
+                fmt={(v) => `${Math.round(v * 100)}`}
+              />
+            </div>
+          </div>
+
+          {/* ========== Filters ========== */}
           <div>
             <div className="text-xs font-semibold text-neutral-700 mb-2 flex items-center gap-1">
               <Sparkles className="h-3.5 w-3.5 text-orange-500" /> {t.studio.editor.filter}
@@ -165,20 +595,21 @@ function Editor({ open, item, onClose, onSave, t }) {
               {filterKeys.map((k) => {
                 const Icon = FILTER_ICONS[k] || Sparkles
                 const active = adjust.filter === k
+                const previewFilter = buildFilterString({ ...adjust, filter: k })
                 return (
                   <button
                     key={k}
                     onClick={() => set({ filter: k })}
                     className={`group relative rounded-xl overflow-hidden border transition ${active ? 'border-orange-500 ring-2 ring-orange-200' : 'border-neutral-200 hover:border-orange-300'}`}
                   >
-                    <div className="aspect-square relative">
+                    <div className="aspect-square relative bg-neutral-900">
                       <img
                         src={item.url}
                         alt=""
                         className="absolute inset-0 h-full w-full object-cover"
-                        style={{ filter: FILTERS[k].css }}
+                        style={{ filter: previewFilter }}
                       />
-                      <div className="absolute inset-x-0 bottom-0 bg-black/55 text-white text-[10px] font-semibold px-1.5 py-0.5 flex items-center justify-center gap-1 backdrop-blur-sm">
+                      <div className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[10px] font-semibold px-1.5 py-0.5 flex items-center justify-center gap-1 backdrop-blur-sm">
                         <Icon className="h-3 w-3" />
                         <span className="truncate">{t.studio.editor.filters[k]}</span>
                       </div>
@@ -194,19 +625,25 @@ function Editor({ open, item, onClose, onSave, t }) {
             </div>
           </div>
 
+          {/* ========== Actions ========== */}
           <div className="flex items-center justify-between gap-3 pt-1">
-            <Button variant="ghost" onClick={reset} className="text-neutral-600">
+            <Button variant="ghost" onClick={reset} className="text-neutral-600" disabled={saving}>
               {t.studio.editor.reset}
             </Button>
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={onClose} className="rounded-full">
+              <Button variant="outline" onClick={onClose} className="rounded-full" disabled={saving}>
                 {t.studio.editor.cancel}
               </Button>
               <Button
-                onClick={() => onSave({ ...adjust, configured: true })}
+                onClick={handleSave}
+                disabled={saving}
                 className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-200"
               >
-                <Check className="h-4 w-4 mr-1" /> {t.studio.editor.save}
+                {saving ? (
+                  <>{t.studio.editor.saving}</>
+                ) : (
+                  <><Check className="h-4 w-4 mr-1" /> {t.studio.editor.save}</>
+                )}
               </Button>
             </div>
           </div>
@@ -216,6 +653,21 @@ function Editor({ open, item, onClose, onSave, t }) {
   )
 }
 
+function AdjustSlider({ icon: Icon, label, value, min, max, step, onChange, fmt }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs font-semibold text-neutral-700 mb-1">
+        <span className="flex items-center gap-1"><Icon className="h-3.5 w-3.5 text-orange-500" /> {label}</span>
+        <span className="tabular-nums text-neutral-500">{fmt(value)}</span>
+      </div>
+      <Slider min={min} max={max} step={step} value={[value]} onValueChange={(v) => onChange(v[0])} />
+    </div>
+  )
+}
+
+// ==================================================================
+// MAIN STUDIO
+// ==================================================================
 export default function MagnetStudio({ t, onUseThese }) {
   const [items, setItems] = useState([])
   const [editingId, setEditingId] = useState(null)
@@ -234,6 +686,8 @@ export default function MagnetStudio({ t, onUseThese }) {
       url: URL.createObjectURL(f),
       name: f.name,
       adjust: { ...DEFAULT_ADJUST },
+      outputUrl: null,
+      outputBlob: null,
     }))
     setItems((prev) => [...prev, ...newItems].slice(0, 20))
   }, [])
@@ -247,24 +701,38 @@ export default function MagnetStudio({ t, onUseThese }) {
     setItems((prev) => {
       const found = prev.find((p) => p.id === id)
       if (found?.url) try { URL.revokeObjectURL(found.url) } catch {}
+      if (found?.outputUrl) try { URL.revokeObjectURL(found.outputUrl) } catch {}
       return prev.filter((p) => p.id !== id)
     })
   }
   const clearAll = () => {
-    items.forEach((i) => { try { URL.revokeObjectURL(i.url) } catch {} })
+    items.forEach((i) => {
+      try { URL.revokeObjectURL(i.url) } catch {}
+      if (i.outputUrl) try { URL.revokeObjectURL(i.outputUrl) } catch {}
+    })
     setItems([])
   }
 
   const editing = items.find((i) => i.id === editingId) || null
   const openEditor = (id) => setEditingId(id)
-  const saveEditor = (adjust) => {
-    setItems((prev) => prev.map((p) => (p.id === editingId ? { ...p, adjust } : p)))
+  const saveEditor = ({ adjust, outputBlob, outputUrl }) => {
+    setItems((prev) => prev.map((p) => {
+      if (p.id !== editingId) return p
+      // revoke previous baked url if any
+      if (p.outputUrl && outputUrl && p.outputUrl !== outputUrl) {
+        try { URL.revokeObjectURL(p.outputUrl) } catch {}
+      }
+      return {
+        ...p,
+        adjust,
+        outputBlob: outputBlob || p.outputBlob,
+        outputUrl: outputUrl || p.outputUrl,
+      }
+    }))
     setEditingId(null)
   }
 
   const unlockedPromo = configuredCount >= 10
-  const chargedCount = configuredCount >= 11 ? Math.max(configuredCount - Math.floor(configuredCount / 11), configuredCount - 1) : configuredCount
-  // Simple Buy 10 Get 1 Free: for every 11 items, 1 is free.
   const freeCount = Math.floor(configuredCount / 11)
 
   return (
@@ -355,7 +823,7 @@ export default function MagnetStudio({ t, onUseThese }) {
                 )}
                 <Button
                   disabled={configuredCount === 0}
-                  onClick={() => onUseThese?.({ total: totalCount, configured: configuredCount, freeCount })}
+                  onClick={() => onUseThese?.({ total: totalCount, configured: configuredCount, freeCount, items })}
                   className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-200 disabled:opacity-50"
                 >
                   {t.studio.useThese} <ArrowRight className="h-4 w-4 ml-1" />
