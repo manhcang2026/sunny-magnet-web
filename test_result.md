@@ -125,6 +125,12 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ ALL TESTS PASSED. Validated: (1) Returns 400 for missing fullName or phone, (2) Successfully creates leads with UUID id and ISO createdAt timestamp, (3) Sets source='landing_page' correctly, (4) Returns webhookStatus='not_configured' when GAS_WEBHOOK_URL not set, (5) Bilingual support works (tested with language='en' and 'vi'), (6) Extra unknown fields are safely ignored and not stored, (7) All lead data persists correctly to MongoDB. Test file: /app/backend_test.py"
+      - working: "NA"
+        agent: "main"
+        comment: "EXTENDED endpoint: now also accepts email and delivery fields; response now includes mock order data (orderId in format SM-XXXXXXXX, totalPrice as formatted VNĐ using 20.000đ × configured with Buy-12-Get-1-Free discount, vietQrUrl placeholder from qrserver.com). Manual curl test with quantity=13, email='', delivery='pickup' returned totalPrice='240.000đ' (correct: 13 - 1 free = 12 × 20000). Please retest to make sure existing behavior still works AND that new fields are stored/returned correctly."
+      - working: true
+        agent: "testing"
+        comment: "✅ ALL 10 TESTS PASSED! Extended API fully validated: (1) POST /api/leads accepts new email & delivery fields and stores them correctly, (2) Response includes orderId matching pattern /^SM-[A-Z0-9]+$/, (3) totalPrice correctly formatted with vi-VN locale ending in 'đ', (4) totalPrice math verified for quantities 1,5,12,13,26,0 with Buy-12-Get-1-Free discount (qty=13 -> '240.000đ' = 12×20000), (5) vietQrUrl returns valid http URL (qrserver.com placeholder), (6) webhookStatus='not_configured' when GAS_WEBHOOK_URL empty, (7) message field present, (8) GET /api/leads includes email/delivery fields for new leads, (9) No regression: validation (400 for missing fields), bilingual support (en/vi), extra fields ignored, UUID id, ISO createdAt, source='landing_page' all working, (10) OPTIONS /api/leads returns 204 with CORS. Test file: /app/backend_test.py"
   - task: "GET /api/health and GET /api/leads listing"
     implemented: true
     working: true
@@ -184,3 +190,7 @@ agent_communication:
     message: "MVP landing page built. Backend leads endpoint saves to MongoDB and can forward to GAS webhook when GAS_WEBHOOK_URL env var is set. Please test the backend endpoints (POST /api/leads validation + persistence, GET /api/leads listing, GET /api/health)."
   - agent: "testing"
     message: "✅ Backend testing complete - ALL 9 TESTS PASSED! Tested: GET /api/health, GET /api (root), OPTIONS /api/leads (CORS), POST /api/leads validation (400 errors), POST /api/leads success (English & Vietnamese), extra fields handling, GET /api/leads listing (sorted, no _id), and verified posted leads appear in list. All endpoints working correctly. UUID generation, ISO timestamps, source field, webhookStatus, bilingual support, and data persistence all validated. Backend is production-ready."
+  - agent: "main"
+    message: "Extended POST /api/leads with email, delivery fields and mock order response (orderId, totalPrice with Buy-12-Get-1-Free discount, vietQrUrl). Please retest extended API."
+  - agent: "testing"
+    message: "✅ EXTENDED API TESTING COMPLETE - ALL 10 TESTS PASSED! Validated: (1) New email & delivery fields stored and returned correctly, (2) orderId format SM-[A-Z0-9]+ working, (3) totalPrice formatted correctly with vi-VN locale (ending in 'đ'), (4) totalPrice math correct for all quantities including Buy-12-Get-1-Free discount (qty=13 -> '240.000đ'), (5) vietQrUrl returns valid http URL, (6) webhookStatus='not_configured', (7) GET /api/leads includes new fields, (8) No regression on validation, bilingual support, extra fields handling, UUID, ISO timestamps, source field. Backend fully production-ready with extended features."

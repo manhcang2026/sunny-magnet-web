@@ -54,17 +54,20 @@ export async function POST(request, context) {
   try {
     const body = await request.json()
     if (path === 'leads') {
-      const { fullName, phone, address, referralCode, quantity, notes, language } = body || {}
+      const { fullName, phone, address, email, delivery, referralCode, quantity, notes, language } = body || {}
       if (!fullName || !phone) {
         return cors(NextResponse.json({ error: 'fullName and phone are required' }, { status: 400 }))
       }
+      const qty = quantity ? Number(quantity) : 0
       const lead = {
         id: uuidv4(),
         fullName: String(fullName).trim(),
         phone: String(phone).trim(),
         address: (address || '').trim(),
+        email: (email || '').trim(),
+        delivery: (delivery || '').trim(),
         referralCode: (referralCode || '').trim(),
-        quantity: quantity ? Number(quantity) : null,
+        quantity: qty || null,
         notes: (notes || '').trim(),
         language: language || 'en',
         source: 'landing_page',
@@ -87,7 +90,29 @@ export async function POST(request, context) {
           webhookStatus = 'webhook_failed'
         }
       }
-      return cors(NextResponse.json({ success: true, lead, webhookStatus }))
+
+      // Build a mock order response so the Thank You screen can render
+      // The website does NOT compute discounts; this is a placeholder until GAS is wired up.
+      const UNIT_PRICE = 20000
+      const freeCount = Math.floor(qty / 13)
+      const chargedCount = Math.max(0, qty - freeCount)
+      const totalNumber = chargedCount * UNIT_PRICE
+      const totalFormatted = totalNumber.toLocaleString('vi-VN') + 'đ'
+      const orderId = 'SM-' + Date.now().toString(36).toUpperCase().slice(-8)
+      // Public placeholder VietQR image (real backend should replace with actual VietQR URL)
+      const qrData = `ORDER:${orderId} AMOUNT:${totalNumber} NAME:${lead.fullName}`
+      const vietQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=${encodeURIComponent(qrData)}`
+
+      return cors(NextResponse.json({
+        success: true,
+        lead,
+        webhookStatus,
+        // Mock order fields for the Thank You screen
+        orderId,
+        totalPrice: totalFormatted,
+        vietQrUrl,
+        message: 'Order received',
+      }))
     }
     return cors(NextResponse.json({ error: 'Not found' }, { status: 404 }))
   } catch (e) {

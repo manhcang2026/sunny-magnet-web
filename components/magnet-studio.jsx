@@ -15,11 +15,9 @@ import {
 // ==== Print constants ====
 const MM_TOTAL = 70
 const MM_VISIBLE = 65
-const OUT_PX = 826                                   // 70mm @ 300 DPI (≈826.77)
+const OUT_PX = 827                                   // Explicit output resolution
 const VISIBLE_FRACTION = MM_VISIBLE / MM_TOTAL       // 0.9286
 const BLEED_FRACTION = (MM_TOTAL - MM_VISIBLE) / 2 / MM_TOTAL // 0.0357
-const VISIBLE_RADIUS_MM = 4
-const VISIBLE_RADIUS_PCT = (VISIBLE_RADIUS_MM / MM_TOTAL) * 100 // rounding of safe area in % of whole viewport
 
 const FILTER_PRESETS = {
   none:    { css: '' },
@@ -31,12 +29,13 @@ const FILTER_PRESETS = {
 const FILTER_ICONS = { none: Sparkles, auto: Wand2, bright: SunIcon, vibrant: Droplet, pastel: Palette }
 
 const DEFAULT_ADJUST = {
-  panX: 0, panY: 0,             // fraction of viewport (before transform), −0.8..+0.8
-  zoom: 1,                      // multiplier
-  rotate: 0,                    // degrees
+  panX: 0, panY: 0,
+  zoom: 1,
+  rotate: 0,
   brightness: 1,
   contrast: 1,
-  warmth: 0,                    // −1..+1
+  temperature: 0,               // −1..+1 (cool → warm)
+  tint: 0,                      // −1..+1 (magenta → green)  = white balance
   filter: 'none',
   configured: false,
 }
@@ -46,8 +45,9 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 
 function buildFilterString(a) {
   const parts = [`brightness(${a.brightness})`, `contrast(${a.contrast})`]
-  if (a.warmth > 0) parts.push(`sepia(${(a.warmth * 0.35).toFixed(3)})`)
-  if (a.warmth < 0) parts.push(`hue-rotate(${(a.warmth * 25).toFixed(1)}deg)`)
+  if (a.temperature > 0) parts.push(`sepia(${(a.temperature * 0.35).toFixed(3)})`)
+  if (a.temperature < 0) parts.push(`hue-rotate(${(a.temperature * 20).toFixed(1)}deg)`)
+  if (a.tint !== 0) parts.push(`hue-rotate(${(a.tint * 12).toFixed(1)}deg)`)
   const p = FILTER_PRESETS[a.filter]?.css
   if (p) parts.push(p)
   return parts.join(' ')
@@ -93,7 +93,6 @@ function LivePreview({ item, sizeClass = 'w-full aspect-square' }) {
         className="absolute overflow-hidden shadow-[0_10px_25px_-8px_rgba(120,80,20,0.35),inset_0_0_0_2px_rgba(255,255,255,0.6),inset_0_0_0_4px_rgba(220,180,90,0.4)] bg-black"
         style={{
           inset: `${BLEED_FRACTION * 100}%`,
-          borderRadius: `${VISIBLE_RADIUS_MM / MM_VISIBLE * 100}%`,
         }}
       >
         {/* Wrapper carrying the transform. It represents the FULL 70×70 print
@@ -206,17 +205,16 @@ function Editor({ open, item, onClose, onSave, t }) {
       const [a, b] = pts
       const dx = b.x - a.x, dy = b.y - a.y
       const dist = Math.hypot(dx, dy) || 1
-      const angle = Math.atan2(dy, dx)
       const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2
       const ratio = dist / g.startDist
-      const angleDelta = ((angle - g.startAngle) * 180) / Math.PI
+      // NOTE: two-finger rotation is intentionally DISABLED on touch canvas.
+      // Users can still rotate precisely via the Rotate slider below.
       const panDx = (cx - g.startCentroid.x) / vp
       const panDy = (cy - g.startCentroid.y) / vp
 
       setAdjust((prev) => ({
         ...prev,
         zoom: clamp(g.baseAdjust.zoom * ratio, 0.5, 5),
-        rotate: g.baseAdjust.rotate + angleDelta,
         panX: clamp(g.baseAdjust.panX + panDx, -0.8, 0.8),
         panY: clamp(g.baseAdjust.panY + panDy, -0.8, 0.8),
       }))
@@ -275,13 +273,16 @@ function Editor({ open, item, onClose, onSave, t }) {
 
       const brightness = clamp(140 / Math.max(20, avgL), 0.9, 1.35)
       const contrast = clamp(220 / spread, 1.0, 1.6)
-      const warmth = clamp((avgB - avgR) / 90, -0.35, 0.35)
+      const temperature = clamp((avgB - avgR) / 90, -0.35, 0.35)
+      // Tint: slight green shift if too magenta-ish
+      const tint = clamp(((avgR + avgB) / 2 - sumG / count) / 120, -0.2, 0.2)
 
       setAdjust((a) => ({
         ...a,
         brightness: +brightness.toFixed(3),
         contrast: +contrast.toFixed(3),
-        warmth: +warmth.toFixed(3),
+        temperature: +temperature.toFixed(3),
+        tint: +tint.toFixed(3),
         filter: 'auto',
       }))
     } catch (err) {
@@ -347,7 +348,6 @@ function Editor({ open, item, onClose, onSave, t }) {
     : { width: '100%', height: 'auto', maxWidth: 'none' }
 
   const svgMaskId = `sm-mask-${item.id}`
-  const rxPct = VISIBLE_RADIUS_PCT
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -408,7 +408,6 @@ function Editor({ open, item, onClose, onSave, t }) {
                       y={BLEED_FRACTION * 100}
                       width={VISIBLE_FRACTION * 100}
                       height={VISIBLE_FRACTION * 100}
-                      rx={rxPct} ry={rxPct}
                       fill="black"
                     />
                   </mask>
@@ -416,7 +415,7 @@ function Editor({ open, item, onClose, onSave, t }) {
                 <rect x="0" y="0" width="100" height="100" fill="#000" fillOpacity="0.55" mask={`url(#${svgMaskId})`} />
               </svg>
 
-              {/* Safe area outline */}
+              {/* Safe area outline - sharp 90° corners */}
               <div
                 className="absolute pointer-events-none"
                 style={{
@@ -425,7 +424,6 @@ function Editor({ open, item, onClose, onSave, t }) {
                   right: `${BLEED_FRACTION * 100}%`,
                   bottom: `${BLEED_FRACTION * 100}%`,
                   border: '2px solid rgba(255,255,255,0.95)',
-                  borderRadius: `${rxPct / VISIBLE_FRACTION}%`,
                   boxShadow: '0 0 0 1px rgba(0,0,0,0.15) inset',
                 }}
               />
@@ -503,7 +501,7 @@ function Editor({ open, item, onClose, onSave, t }) {
             <div className="text-xs font-bold text-amber-900 uppercase tracking-wider mb-3 flex items-center gap-1">
               <Sparkles className="h-3.5 w-3.5" /> {t.studio.editor.adjustments}
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
               <SliderRow icon={SunMedium} label={t.studio.editor.brightness}
                 value={adjust.brightness} min={0.5} max={1.6} step={0.01}
                 onChange={(v) => set({ brightness: v })}
@@ -512,9 +510,13 @@ function Editor({ open, item, onClose, onSave, t }) {
                 value={adjust.contrast} min={0.5} max={1.8} step={0.01}
                 onChange={(v) => set({ contrast: v })}
                 fmt={(v) => `${Math.round((v - 1) * 100)}`} />
-              <SliderRow icon={Thermometer} label={t.studio.editor.warmth}
-                value={adjust.warmth} min={-1} max={1} step={0.01}
-                onChange={(v) => set({ warmth: v })}
+              <SliderRow icon={Droplet} label={t.studio.editor.whiteBalance}
+                value={adjust.tint} min={-1} max={1} step={0.01}
+                onChange={(v) => set({ tint: v })}
+                fmt={(v) => `${Math.round(v * 100)}`} />
+              <SliderRow icon={Thermometer} label={t.studio.editor.temperature}
+                value={adjust.temperature} min={-1} max={1} step={0.01}
+                onChange={(v) => set({ temperature: v })}
                 fmt={(v) => `${Math.round(v * 100)}`} />
             </div>
           </div>
@@ -586,7 +588,7 @@ function SliderRow({ icon: Icon, label, value, min, max, step, onChange, fmt }) 
 // ==================================================================
 // STUDIO
 // ==================================================================
-export default function MagnetStudio({ t, onUseThese }) {
+export default function MagnetStudio({ t, onUseThese, onItemsChange }) {
   const [items, setItems] = useState([])
   const [editingId, setEditingId] = useState(null)
   const [dragOver, setDragOver] = useState(false)
@@ -594,6 +596,11 @@ export default function MagnetStudio({ t, onUseThese }) {
 
   const configuredCount = items.filter((i) => i.adjust.configured).length
   const totalCount = items.length
+
+  useEffect(() => {
+    if (typeof onItemsChange === 'function') onItemsChange(items)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items])
 
   const addFiles = useCallback((fileList) => {
     const files = Array.from(fileList || []).filter((f) => f.type.startsWith('image/'))
@@ -657,8 +664,8 @@ export default function MagnetStudio({ t, onUseThese }) {
     setEditingId(null)
   }
 
-  const unlockedPromo = configuredCount >= 10
-  const freeCount = Math.floor(configuredCount / 11)
+  const unlockedPromo = configuredCount >= 12
+  const freeCount = Math.floor(configuredCount / 13)
 
   return (
     <section id="studio" className="relative py-14 md:py-20 bg-gradient-to-b from-white via-amber-50/40 to-white">
