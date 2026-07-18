@@ -220,7 +220,7 @@ function Gallery({ t }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ duration: 0.4, delay: i * 0.05 }}
-              className={`relative rounded-2xl overflow-hidden shadow-md group ${i === 0 ? 'row-span-2 md:row-span-2 aspect-[3/5]' : 'aspect-[4/5]'}`}
+              className="relative rounded-2xl overflow-hidden shadow-md group aspect-[4/5]"
             >
               <img src={g.url} alt={g.label} className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition duration-700" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
