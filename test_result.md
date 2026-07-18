@@ -152,6 +152,17 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Full landing page built with EN/VI language toggle, hero with auto-changing image slider, pricing tiers with Buy 10 Get 1 Free callout, 3-step How it Works, and a beautiful lead capture form. Sticky mobile CTA. Verified via screenshot."
+  - task: "Magnet Studio - bulk upload, per-image cropper (zoom/rotate/pan), AI-like filters, configured counter, hand-off to order form"
+    implemented: true
+    working: "NA"
+    file: "components/magnet-studio.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Built Magnet Studio: multi-file upload (drag&drop + tap), gallery of realistic square magnet mockups with metallic frame, per-image Editor modal (zoom 1x-3x, rotate -180/+180, drag-to-pan with pointer events, 5 filters: Original/Auto-Enhance/Brighten/Vibrant/Pastel Pop). Live configured count, Buy10Get1 free promo unlock, clicking Use these scrolls to order form and pre-fills the quantity. Fully client-side."
 
 metadata:
   created_by: "main_agent"

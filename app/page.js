@@ -15,6 +15,7 @@ import {
   CheckCircle2, Phone, MapPin, User, Ticket, Package, Languages
 } from 'lucide-react'
 import { translations } from '@/lib/i18n'
+import MagnetStudio from '@/components/magnet-studio'
 
 const HERO_SLIDES = [
   'https://images.pexels.com/photos/15569097/pexels-photo-15569097.jpeg',
@@ -43,6 +44,7 @@ function Nav({ lang, setLang, t }) {
         </a>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-700">
           <a href="#how" className="hover:text-orange-500 transition">{t.nav.how}</a>
+          <a href="#studio" className="hover:text-orange-500 transition">{t.studio.badge}</a>
           <a href="#gallery" className="hover:text-orange-500 transition">{t.nav.gallery}</a>
           <a href="#pricing" className="hover:text-orange-500 transition">{t.nav.pricing}</a>
         </nav>
@@ -336,12 +338,18 @@ function HowItWorks({ t }) {
   )
 }
 
-function OrderForm({ t, lang }) {
+function OrderForm({ t, lang, initialQuantity }) {
   const [form, setForm] = useState({
     fullName: '', phone: '', address: '', referralCode: '', quantity: '', notes: ''
   })
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    if (initialQuantity != null && String(initialQuantity) !== '' && Number(initialQuantity) > 0) {
+      setForm((f) => ({ ...f, quantity: String(initialQuantity) }))
+    }
+  }, [initialQuantity])
 
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -504,6 +512,7 @@ function StickyMobileCTA({ t }) {
 
 const App = () => {
   const [lang, setLang] = useState('en')
+  const [studioQty, setStudioQty] = useState(null)
   const t = useMemo(() => translations[lang], [lang])
 
   useEffect(() => {
@@ -516,6 +525,14 @@ const App = () => {
     if (typeof window !== 'undefined') localStorage.setItem('sunny_lang', lang)
   }, [lang])
 
+  const handleUseThese = ({ configured }) => {
+    setStudioQty(configured)
+    if (typeof window !== 'undefined') {
+      const el = document.getElementById('order')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   return (
     <main className="min-h-screen bg-white">
       <Nav lang={lang} setLang={setLang} t={t} />
@@ -524,7 +541,8 @@ const App = () => {
       <Gallery t={t} />
       <Pricing t={t} />
       <HowItWorks t={t} />
-      <OrderForm t={t} lang={lang} />
+      <MagnetStudio t={t} onUseThese={handleUseThese} />
+      <OrderForm t={t} lang={lang} initialQuantity={studioQty} />
       <Footer t={t} />
       <StickyMobileCTA t={t} />
     </main>
