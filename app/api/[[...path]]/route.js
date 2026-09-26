@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
+import { commerce } from '@/content/site-content'
 
 const MONGO_URL = process.env.MONGO_URL
 const DB_NAME = process.env.DB_NAME || 'sunny_magnet'
@@ -92,11 +93,7 @@ export async function POST(request, context) {
       }
 
       // Build a mock order response so the Thank You screen can render
-      // The website does NOT compute discounts; this is a placeholder until GAS is wired up.
-      const UNIT_PRICE = 20000
-      const freeCount = Math.floor(qty / 13)
-      const chargedCount = Math.max(0, qty - freeCount)
-      const totalNumber = chargedCount * UNIT_PRICE
+      const totalNumber = qty * commerce.unitPrice
       const totalFormatted = totalNumber.toLocaleString('vi-VN') + 'đ'
       const orderId = 'SM-' + Date.now().toString(36).toUpperCase().slice(-8)
       // Public placeholder VietQR image (real backend should replace with actual VietQR URL)

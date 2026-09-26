@@ -664,9 +664,6 @@ export default function MagnetStudio({ t, onUseThese, onItemsChange }) {
     setEditingId(null)
   }
 
-  const unlockedPromo = configuredCount >= 12
-  const freeCount = Math.floor(configuredCount / 13)
-
   return (
     <section id="studio" className="relative py-14 md:py-20 bg-gradient-to-b from-white via-amber-50/40 to-white">
       <div className="container mx-auto px-4">
@@ -733,13 +730,8 @@ export default function MagnetStudio({ t, onUseThese, onItemsChange }) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {unlockedPromo && (
-                  <Badge className="bg-orange-500 text-white hover:bg-orange-500 rounded-full">
-                    🎁 {t.studio.applyPromo}{freeCount > 0 ? ` (+${freeCount})` : ''}
-                  </Badge>
-                )}
                 <Button disabled={configuredCount === 0}
-                  onClick={() => onUseThese?.({ total: totalCount, configured: configuredCount, freeCount, items })}
+                  onClick={() => onUseThese?.({ total: totalCount, configured: configuredCount, items })}
                   className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-200 disabled:opacity-50">
                   {t.studio.useThese} <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>

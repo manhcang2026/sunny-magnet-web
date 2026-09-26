@@ -1,12 +1,13 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
+import { seo } from '@/content/site-content'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
 export const metadata = {
-  title: 'Sunny Magnet — Custom Photo Magnets | Nam châm ảnh cá nhân hóa',
-  description: 'Turn your memories into beautiful custom photo magnets. Buy 10, Get 1 Free. Fast delivery across Vietnam.',
+  title: seo.title,
+  description: seo.description,
 }
 
 export default function RootLayout({ children }) {

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,23 +14,11 @@ import {
   CheckCircle2, Phone, MapPin, User, Ticket, Package, Languages,
   Mail, Home, Store, PartyPopper, Copy, MessageCircle, Loader2, Receipt, Wallet
 } from 'lucide-react'
-import { translations } from '@/lib/i18n'
+import { siteContent } from '@/content/site-content'
 import MagnetStudio from '@/components/magnet-studio'
 
-const HERO_SLIDES = [
-  'https://images.pexels.com/photos/15569097/pexels-photo-15569097.jpeg',
-  'https://images.pexels.com/photos/15555956/pexels-photo-15555956.jpeg',
-  'https://images.pexels.com/photos/17210076/pexels-photo-17210076.jpeg',
-]
-
-const GALLERY = [
-  { url: 'https://images.pexels.com/photos/15555956/pexels-photo-15555956.jpeg', label: 'Family fridge' },
-  { url: 'https://images.pexels.com/photos/15555954/pexels-photo-15555954.jpeg', label: 'Travel memories' },
-  { url: 'https://images.pexels.com/photos/17210076/pexels-photo-17210076.jpeg', label: 'Sunny mornings' },
-  { url: 'https://images.pexels.com/photos/2769188/pexels-photo-2769188.jpeg', label: 'Stack of 13' },
-  { url: 'https://images.pexels.com/photos/1303087/pexels-photo-1303087.jpeg', label: 'Premium gift box' },
-  { url: 'https://images.pexels.com/photos/15569097/pexels-photo-15569097.jpeg', label: 'Kitchen classics' },
-]
+const { brand, contact, commerce, labels, media, promotion, translations } = siteContent
+const formattedUnitPrice = `${commerce.unitPrice.toLocaleString('vi-VN')}đ`
 
 function Nav({ lang, setLang, t }) {
   return (
@@ -41,7 +28,7 @@ function Nav({ lang, setLang, t }) {
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-orange-500 text-white shadow-md shadow-orange-200">
             <Sun className="h-5 w-5" />
           </span>
-          <span className="tracking-tight">Sunny <span className="text-orange-500">Magnet</span></span>
+          <span className="tracking-tight">{brand.nameFirst} <span className="text-orange-500">{brand.nameHighlight}</span></span>
         </a>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-700">
           <a href="#how" className="hover:text-orange-500 transition">{t.nav.how}</a>
@@ -53,7 +40,7 @@ function Nav({ lang, setLang, t }) {
           <button
             onClick={() => setLang(lang === 'en' ? 'vi' : 'en')}
             className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-50 transition"
-            aria-label="Toggle language"
+            aria-label={labels.languageToggle}
           >
             <Languages className="h-3.5 w-3.5" />
             {lang === 'en' ? 'VI' : 'EN'}
@@ -73,7 +60,7 @@ function Nav({ lang, setLang, t }) {
 function Hero({ t }) {
   const [idx, setIdx] = useState(0)
   useEffect(() => {
-    const id = setInterval(() => setIdx(i => (i + 1) % HERO_SLIDES.length), 4200)
+    const id = setInterval(() => setIdx(i => (i + 1) % media.heroSlides.length), 4200)
     return () => clearInterval(id)
   }, [])
 
@@ -120,24 +107,24 @@ function Hero({ t }) {
 
           <div className="relative">
             <div className="relative aspect-[4/5] md:aspect-[5/6] w-full max-w-md mx-auto rounded-3xl overflow-hidden shadow-2xl shadow-orange-200 ring-1 ring-amber-200">
-              {HERO_SLIDES.map((src, i) => (
+              {media.heroSlides.map((src, i) => (
                 <img
                   key={src}
                   src={src}
-                  alt="Photo magnets on fridge"
+                  alt={media.heroAlt}
                   className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${i === idx ? 'opacity-100' : 'opacity-0'}`}
                 />
               ))}
               <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                 <div className="flex gap-1.5">
-                  {HERO_SLIDES.map((_, i) => (
+                  {media.heroSlides.map((_, i) => (
                     <span key={i}
                       className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-6 bg-white' : 'w-2 bg-white/60'}`} />
                   ))}
                 </div>
                 <Badge className="bg-white/95 text-amber-900 hover:bg-white border-none shadow">
-                  <Sparkles className="mr-1 h-3 w-3" /> HD Print
+                  <Sparkles className="mr-1 h-3 w-3" /> {labels.heroPrint}
                 </Badge>
               </div>
             </div>
@@ -151,8 +138,8 @@ function Hero({ t }) {
                   <Gift className="h-4 w-4 text-orange-600" />
                 </div>
                 <div>
-                  <div className="text-xs text-neutral-500">Free gift box</div>
-                  <div className="text-sm font-semibold">on every order</div>
+                  <div className="text-xs text-neutral-500">{labels.heroGiftTitle}</div>
+                  <div className="text-sm font-semibold">{labels.heroGiftSubtitle}</div>
                 </div>
               </div>
             </motion.div>
@@ -165,8 +152,8 @@ function Hero({ t }) {
                   <ShieldCheck className="h-4 w-4 text-amber-700" />
                 </div>
                 <div>
-                  <div className="text-xs text-neutral-500">1-year</div>
-                  <div className="text-sm font-semibold">quality warranty</div>
+                  <div className="text-xs text-neutral-500">{labels.heroWarrantyTitle}</div>
+                  <div className="text-sm font-semibold">{labels.heroWarrantySubtitle}</div>
                 </div>
               </div>
             </motion.div>
@@ -209,12 +196,12 @@ function Gallery({ t }) {
     <section id="gallery" className="relative py-14 md:py-20 bg-gradient-to-b from-amber-50/60 to-white">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl">
-          <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100 border-none rounded-full">Gallery</Badge>
+          <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100 border-none rounded-full">{labels.gallery}</Badge>
           <h2 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight">{t.gallery.title}</h2>
           <p className="mt-3 text-neutral-600">{t.gallery.subtitle}</p>
         </div>
         <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-          {GALLERY.map((g, i) => (
+          {media.gallery.map((g, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 12 }}
@@ -241,31 +228,34 @@ function Pricing({ t }) {
         <div className="relative">
           <div className="relative aspect-square max-w-md mx-auto rounded-3xl overflow-hidden shadow-xl ring-1 ring-amber-200">
             <img
-              src="https://images.pexels.com/photos/2769188/pexels-photo-2769188.jpeg"
-              alt="Stack of 13 magnets"
+              src={media.pricingImage.url}
+              alt={media.pricingImage.alt}
               className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-orange-500/30" />
           </div>
-          <div className="absolute -top-4 -left-2 md:top-4 md:-left-6 bg-white rounded-2xl shadow-xl p-4 border border-amber-100 float-slow">
-            <div className="text-xs uppercase tracking-wider text-amber-700 font-bold">Deal</div>
-            <div className="text-2xl md:text-3xl font-extrabold text-neutral-900">{t.pricing.deal}</div>
-            <div className="text-sm text-neutral-600 mt-1 max-w-[220px]">13 → 12 💛</div>
-          </div>
+          {promotion.enabled && (
+            <div className="absolute -top-4 -left-2 md:top-4 md:-left-6 bg-white rounded-2xl shadow-xl p-4 border border-amber-100 float-slow">
+              <div className="text-2xl md:text-3xl font-extrabold text-neutral-900">{promotion.title}</div>
+              <div className="text-sm text-neutral-600 mt-1 max-w-[220px]">{promotion.description}</div>
+            </div>
+          )}
         </div>
         <div>
-          <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100 border-none rounded-full">Pricing</Badge>
+          <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100 border-none rounded-full">{labels.pricing}</Badge>
           <h2 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight">{t.pricing.title}</h2>
           <p className="mt-2 text-neutral-600">{t.pricing.subtitle}</p>
-          <div className="mt-4 rounded-2xl border border-orange-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-orange-500 text-white flex items-center justify-center shadow">
-              <Gift className="h-5 w-5" />
+          {promotion.enabled && (
+            <div className="mt-4 rounded-2xl border border-orange-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-orange-500 text-white flex items-center justify-center shadow">
+                <Gift className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="font-bold text-orange-900">{promotion.title}</div>
+                <div className="text-sm text-orange-800/80">{promotion.description}</div>
+              </div>
             </div>
-            <div>
-              <div className="font-bold text-orange-900">{t.pricing.deal}</div>
-              <div className="text-sm text-orange-800/80">{t.pricing.dealNote}</div>
-            </div>
-          </div>
+          )}
 
           <div className="mt-6 grid gap-3">
             {t.pricing.tiers.map((tier, i) => (
@@ -278,11 +268,11 @@ function Pricing({ t }) {
                   <div className="text-xs mt-1 text-orange-700 font-medium">{tier.perk}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-extrabold text-neutral-900">{tier.price}</div>
+                  <div className="text-2xl font-extrabold text-neutral-900">{formattedUnitPrice}</div>
                   <div className="text-xs text-neutral-500">{t.pricing.unit}</div>
                 </div>
                 {tier.highlight && (
-                  <span className="absolute -top-2 right-4 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">POPULAR</span>
+                  <span className="absolute -top-2 right-4 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">{labels.popular}</span>
                 )}
               </div>
             ))}
@@ -303,7 +293,7 @@ function HowItWorks({ t }) {
     <section id="how" className="relative py-14 md:py-20 bg-gradient-to-br from-amber-50 via-white to-orange-50">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto">
-          <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100 border-none rounded-full">3 steps</Badge>
+          <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100 border-none rounded-full">{labels.howSteps}</Badge>
           <h2 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight">{t.how.title}</h2>
           <p className="mt-2 text-neutral-600">{t.how.subtitle}</p>
         </div>
@@ -455,9 +445,11 @@ function OrderForm({ t, lang, studioItems, referralFromUrl }) {
       <div className="container mx-auto px-4 relative">
         <div className="grid md:grid-cols-2 gap-10 items-start">
           <div className="text-white md:sticky md:top-24">
-            <Badge className="bg-white/25 text-white border-white/40 hover:bg-white/25 rounded-full backdrop-blur">
-              ☀️ {t.pricing.deal}
-            </Badge>
+            {promotion.enabled && (
+              <Badge className="bg-white/25 text-white border-white/40 hover:bg-white/25 rounded-full backdrop-blur">
+                ☀️ {promotion.title}
+              </Badge>
+            )}
             <h2 className="mt-4 text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
               {t.form.title}
             </h2>
@@ -566,7 +558,7 @@ function DeliveryOption({ icon: Icon, label, checked, onChange }) {
 }
 
 function ThankYouScreen({ t, result, onNew }) {
-  const zaloUrl = process.env.NEXT_PUBLIC_ZALO_URL || 'https://zalo.me/'
+  const zaloUrl = process.env.NEXT_PUBLIC_ZALO_URL || contact.supportUrl
   const [copied, setCopied] = useState(false)
 
   const copyOrderId = async () => {
@@ -638,12 +630,12 @@ function ThankYouScreen({ t, result, onNew }) {
                   {result.vietQrUrl ? (
                     <img
                       src={result.vietQrUrl}
-                      alt="VietQR"
+                      alt={labels.vietQrAlt}
                       className="max-w-full max-h-full object-contain"
                     />
                   ) : (
                     <div className="text-center text-neutral-400 text-xs px-4">
-                      QR sẽ được gửi qua Zalo trong ít phút
+                      {labels.vietQrFallback}
                     </div>
                   )}
                 </div>
@@ -701,19 +693,19 @@ function Footer({ t }) {
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-orange-500 text-white">
                 <Sun className="h-5 w-5" />
               </span>
-              Sunny <span className="text-orange-400">Magnet</span>
+              {brand.nameFirst} <span className="text-orange-400">{brand.nameHighlight}</span>
             </div>
             <p className="mt-3 text-sm text-neutral-400 max-w-xs">{t.footer.tagline}</p>
           </div>
           <div>
             <div className="text-white font-semibold">{t.footer.contact}</div>
             <ul className="mt-3 space-y-2 text-sm">
-              <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-orange-400" /> 09xx xxx xxx</li>
-              <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-orange-400" /> Ho Chi Minh City, Vietnam</li>
+              <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-orange-400" /> {contact.phone}</li>
+              <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-orange-400" /> {contact.address}</li>
             </ul>
           </div>
           <div>
-            <div className="text-white font-semibold">Sunny Magnet</div>
+            <div className="text-white font-semibold">{brand.name}</div>
             <ul className="mt-3 space-y-2 text-sm text-neutral-400">
               <li><a href="#how" className="hover:text-orange-300">{t.nav.how}</a></li>
               <li><a href="#gallery" className="hover:text-orange-300">{t.nav.gallery}</a></li>
@@ -722,8 +714,8 @@ function Footer({ t }) {
           </div>
         </div>
         <div className="mt-10 pt-6 border-t border-neutral-800 text-xs text-neutral-500 flex items-center justify-between">
-          <div>© {new Date().getFullYear()} Sunny Magnet. {t.footer.rights}</div>
-          <div>Made with ☀️ in Vietnam</div>
+          <div>© {new Date().getFullYear()} {brand.name}. {t.footer.rights}</div>
+          <div>{labels.footerMadeIn}</div>
         </div>
       </div>
     </footer>
