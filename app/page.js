@@ -20,6 +20,10 @@ const App = () => {
   const [studioItems, setStudioItems] = useState([])
   const [referralFromUrl, setReferralFromUrl] = useState('')
   const t = useMemo(() => translations[lang], [lang])
+  const configuredCount = useMemo(
+    () => studioItems.filter((item) => item.adjust?.configured).length,
+    [studioItems]
+  )
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -52,7 +56,7 @@ const App = () => {
       <MagnetStudio t={t} onUseThese={handleUseThese} onItemsChange={setStudioItems} />
       <OrderForm t={t} lang={lang} studioItems={studioItems} referralFromUrl={referralFromUrl} />
       <Footer t={t} />
-      <StickyMobileCTA t={t} />
+      <StickyMobileCTA t={t} configuredCount={configuredCount} />
     </main>
   )
 }

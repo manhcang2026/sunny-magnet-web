@@ -152,6 +152,12 @@ export const siteContent = {
       contact: 'Contact',
       rights: 'All rights reserved.',
     },
+    stickyCta: {
+      create: 'Create your magnets',
+      continue: 'Continue to order',
+      unitSingular: 'magnet',
+      unitPlural: 'magnets',
+    },
     studio: {
       badge: 'Magnet Studio',
       title: 'Design your magnets',
@@ -289,6 +295,12 @@ export const siteContent = {
       tagline: 'Biến kỷ niệm thành nam châm từ 2024.',
       contact: 'Liên hệ',
       rights: 'Bảo lưu mọi quyền.',
+    },
+    stickyCta: {
+      create: 'Tạo nam châm của bạn',
+      continue: 'Tiếp tục đặt hàng',
+      unitSingular: 'nam châm',
+      unitPlural: 'nam châm',
     },
     studio: {
       badge: 'Xưởng Nam Châm',
