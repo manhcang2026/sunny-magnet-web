@@ -35,7 +35,7 @@ export default function Nav({ lang, setLang, t }) {
             asChild
             className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-200"
           >
-            <a href="#order">{t.nav.order}</a>
+            <a href="#studio">{t.nav.order}</a>
           </Button>
         </div>
       </div>

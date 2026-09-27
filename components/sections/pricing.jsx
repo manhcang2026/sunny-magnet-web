@@ -64,7 +64,7 @@ export default function Pricing({ t }) {
           </div>
 
           <Button asChild size="lg" className="mt-6 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 h-12 px-8 shadow-lg shadow-orange-200">
-            <a href="#order">{t.pricing.cta} <ArrowRight className="ml-1 h-4 w-4" /></a>
+            <a href="#studio">{t.pricing.cta} <ArrowRight className="ml-1 h-4 w-4" /></a>
           </Button>
         </div>
       </div>

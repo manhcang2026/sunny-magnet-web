@@ -41,7 +41,7 @@ export default function Hero({ t }) {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Button asChild size="lg" className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 px-8 h-12 text-base shadow-lg shadow-orange-200">
-                  <a href="#order" className="flex items-center gap-2">
+                  <a href="#studio" className="flex items-center gap-2">
                     {t.hero.cta} <ArrowRight className="h-4 w-4" />
                   </a>
                 </Button>
