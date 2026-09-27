@@ -30,7 +30,11 @@ export const siteContent = {
   },
   media: {
     heroSlides: [
-      '/images/sunny/sunny-hero-final.webp',
+      '/images/sunny/hero/hero-01-fridge.webp',
+      '/images/sunny/hero/hero-02-family.webp',
+      '/images/sunny/hero/hero-03-wedding.webp',
+      '/images/sunny/hero/hero-04-pet.webp',
+      '/images/sunny/hero/hero-05-product.webp',
     ],
     heroAlt: 'Photo magnets on fridge',
     pricingImage: {
@@ -51,11 +55,6 @@ export const siteContent = {
     pricing: 'Pricing',
     howSteps: '3 steps',
     popular: 'POPULAR',
-    heroPrint: 'HD Print',
-    heroGiftTitle: 'Free gift box',
-    heroGiftSubtitle: 'on every order',
-    heroWarrantyTitle: '1-year',
-    heroWarrantySubtitle: 'quality warranty',
     languageToggle: 'Toggle language',
     vietQrAlt: 'VietQR',
     vietQrFallback: 'QR sẽ được gửi qua Zalo trong ít phút',
@@ -74,6 +73,13 @@ export const siteContent = {
       stat1: '10,000+ happy customers',
       stat2: '4.9/5 rating',
       stat3: 'Ships in 24h',
+      visualBadges: {
+        customTitle: 'Custom made',
+        customSubtitle: 'from your photos',
+        warrantyTitle: 'Product warranty',
+        warrantySubtitle: '1 year',
+        print: 'HD Print',
+      },
     },
     features: {
       title: 'Why customers love Sunny Magnet',
@@ -218,6 +224,13 @@ export const siteContent = {
       stat1: '10.000+ khách hàng',
       stat2: '4.9/5 đánh giá',
       stat3: 'Giao trong 24h',
+      visualBadges: {
+        customTitle: 'Thiết kế riêng',
+        customSubtitle: 'từ ảnh của bạn',
+        warrantyTitle: 'Bảo hành sản phẩm',
+        warrantySubtitle: '1 năm',
+        print: 'In HD',
+      },
     },
     features: {
       title: 'Vì sao khách yêu Sunny Magnet',
