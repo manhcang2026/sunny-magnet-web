@@ -30,13 +30,11 @@ export const siteContent = {
   },
   media: {
     heroSlides: [
-      'https://images.pexels.com/photos/15569097/pexels-photo-15569097.jpeg',
-      'https://images.pexels.com/photos/15555956/pexels-photo-15555956.jpeg',
-      'https://images.pexels.com/photos/17210076/pexels-photo-17210076.jpeg',
+      '/images/sunny/sunny-hero-final.webp',
     ],
     heroAlt: 'Photo magnets on fridge',
     pricingImage: {
-      url: 'https://images.pexels.com/photos/2769188/pexels-photo-2769188.jpeg',
+      url: '/images/sunny/sunny-pricing-final.webp',
       alt: 'Photo magnets',
     },
     gallery: [
