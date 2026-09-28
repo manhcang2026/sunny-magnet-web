@@ -83,9 +83,10 @@ Sunny Assist là option thứ cấp, áp dụng từ **6 nam châm trở lên**.
 
 Không lấy Supabase Storage làm kho ảnh chính ở giai đoạn đầu.
 
-### 2.4 GAS không còn là business engine
+### 2.4 Backend gọi Google Drive API trực tiếp
 
-GAS V2 nếu còn dùng chỉ nên là **Drive bridge / file service**:
+GAS được loại khỏi V2 runtime. Legacy GAS chỉ còn historical/reference.
+Sunny Backend trên Oracle VPS gọi **Google Drive API trực tiếp** để:
 
 - tạo folder Drive;
 - upload original;
@@ -94,7 +95,11 @@ GAS V2 nếu còn dùng chỉ nên là **Drive bridge / file service**:
 - upload preview;
 - trả `fileId`, `folderId` và metadata về backend.
 
-Không đặt pricing, promotion, commission, event quota hoặc order state trong GAS.
+OAuth 2.0 Web Server flow dùng MAIN Google account của owner/admin cho operational
+infrastructure, không phải customer Google login. Scope là
+`https://www.googleapis.com/auth/drive.file`; backend sẽ lưu refresh token an toàn,
+server-only. Application tạo root `Sunny Magnet Production` khi bootstrap và lưu
+root ID; normal V2 operations chỉ dùng working tree này. OAuth/Drive chưa live.
 
 ### 2.5 Google Sheet không còn là database chính
 
@@ -129,7 +134,7 @@ Nếu Sheet lỗi thì website/order engine vẫn phải hoạt động bình th
         │                      │                        │
         ▼                      ▼                        ▼
    SUPABASE DB            FILE SERVICE             EMAIL SERVICE
-   + Supabase Auth       GAS → Drive initially       domain email
+   + Supabase Auth       Direct Drive API            domain email
         │                      │
         │                      ▼
         │                 GOOGLE DRIVE
@@ -508,7 +513,7 @@ Không overwrite print file cũ.
 ## 11. Google Drive structure
 
 ```text
-Sunny Magnet/
+Sunny Magnet Production/
 └── Orders/
     └── 2026/
         └── 09/
@@ -1163,7 +1168,7 @@ Nhưng business rule cũ **không được copy nguyên sang V2**.
 - price/business rules phải nằm trong backend/database mới;
 - Sheet không phải source of truth.
 
-Legacy GAS chỉ dùng làm reference cho:
+Legacy GAS không thuộc V2 runtime, chỉ dùng làm historical/reference cho:
 
 - Drive upload;
 - naming;
@@ -1232,7 +1237,7 @@ Không nên move toàn bộ frontend ngay trong lúc site đang chạy ổn vì 
 │   ├── db/
 │   ├── api/
 │   ├── print-generator/
-│   ├── drive-bridge/
+│   ├── drive/
 │   ├── workers/
 │   └── tests/
 │
@@ -1266,7 +1271,7 @@ ROOT = frontend hiện tại
 ├── services/
 │   ├── api/
 │   ├── print-generator/
-│   ├── drive-bridge/
+│   ├── drive/
 │   └── workers/
 │
 ├── supabase/
@@ -1291,7 +1296,7 @@ Việc move frontend phải là refactor riêng, có checkpoint và test deploym
 backend/
 ├── db/
 ├── api/
-├── drive-bridge/
+├── drive/
 ├── print-generator/
 ├── workers/
 └── tests/
@@ -1299,7 +1304,7 @@ backend/
 
 - `api/`: server-side order/admin endpoints;
 - `db/`: backend-side DB helpers/specs;
-- `drive-bridge/`: Google Drive/GAS integration;
+- `drive/`: direct Google Drive API integration;
 - `print-generator/`: A4 PDF + preview generation;
 - `workers/`: commission, event quota, notifications/background jobs;
 - `tests/`: backend tests.
@@ -1332,7 +1337,7 @@ Status update (2026-09-28):
 - Backend Core foundation is initialized with the `orders`, `order_items`, `assets`, and `print_jobs` tables.
 - All four tables have RLS enabled. Browser roles `anon` and `authenticated` currently have no direct table access.
 - There are intentionally no RLS policies yet; public order creation will later use controlled backend endpoints.
-- Google Drive/File Pipeline, Print Generator, and Partner/Event modules are not implemented yet.
+- Google Drive/File Pipeline has a local BE-02A foundation only; live integration, Print Generator, and Partner/Event modules are not implemented yet.
 - Git now mirrors remote migrations `20260928075743_foundation_security`, `20260928075919_core_order_schema`, and `20260928075939_print_job_asset_indexes`.
 - Asset relationships intentionally use `assets.order_item_id`; the current item asset is resolved by `order_item_id`, `asset_type`, and `is_current = true` (no circular asset foreign keys on `order_items`).
 
@@ -1350,8 +1355,14 @@ Chưa nối production frontend.
 
 ### Phase 2 — File Pipeline
 
+SUNNY-BE-02A: local direct Google Drive REST API foundation exists in `backend/drive/`
+with owner/admin OAuth helpers, token refresh, folder provisioning, semantic upload
+helpers, and mocked offline tests. OAuth/Drive integration is not live; no remote
+bootstrap/upload, Supabase asset sync, Print Generator, or frontend integration
+has been performed. GAS is not part of V2 runtime.
+
 - Drive root;
-- Drive bridge;
+- direct Drive API contract;
 - original upload;
 - artwork upload;
 - metadata sync.
@@ -1512,7 +1523,6 @@ Chưa cần khóa ngay:
 - email provider cụ thể;
 - bank/payment webhook provider;
 - exact SQL types/indexes/RLS;
-- Drive API trực tiếp hay GAS bridge dài hạn;
 - optional customer account;
 - exact print generator library/runtime;
 - exact admin UI;
@@ -1535,7 +1545,7 @@ Completed foundation work:
 Scope:
 
 - create Drive root/folder convention;
-- define Drive bridge contract;
+- define direct Google Drive API contract;
 - upload originals;
 - upload final artworks;
 - sync Drive metadata to Supabase assets;
@@ -1570,10 +1580,9 @@ Website
 Backend API
    │
    ├── Supabase = data/auth/business state
-   ├── Google Drive = originals/artworks/print files
+   ├── Google Drive API directly = originals/artworks/print files
    ├── Print Generator = A4 production output
-   ├── Email provider = transactional email
-   └── GAS = optional transitional Drive bridge
+   └── Email provider = transactional email
 ```
 
 Retail, Sunny Assist, Partner và Event dùng chung production core:
