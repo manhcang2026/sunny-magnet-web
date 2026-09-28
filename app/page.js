@@ -6,7 +6,7 @@ import MagnetStudio from '@/components/magnet-studio'
 import Nav from '@/components/sections/nav'
 import Hero from '@/components/sections/hero'
 import Features from '@/components/sections/features'
-import Gallery from '@/components/sections/gallery'
+import ProcessVideo from '@/components/sections/process-video'
 import Pricing from '@/components/sections/pricing'
 import HowItWorks from '@/components/sections/how-it-works'
 import Footer from '@/components/sections/footer'
@@ -50,7 +50,7 @@ const App = () => {
       <Nav lang={lang} setLang={setLang} t={t} />
       <Hero t={t} />
       <Features t={t} />
-      <Gallery t={t} />
+      <ProcessVideo t={t} />
       <Pricing t={t} />
       <HowItWorks t={t} />
       <MagnetStudio t={t} onUseThese={handleUseThese} onItemsChange={setStudioItems} />

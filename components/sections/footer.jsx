@@ -28,7 +28,7 @@ export default function Footer({ t }) {
             <div className="text-white font-semibold">{brand.name}</div>
             <ul className="mt-3 space-y-2 text-sm text-neutral-400">
               <li><a href="#how" className="hover:text-orange-300">{t.nav.how}</a></li>
-              <li><a href="#gallery" className="hover:text-orange-300">{t.nav.gallery}</a></li>
+              <li><a href="#process" className="hover:text-orange-300">{t.nav.process}</a></li>
               <li><a href="#pricing" className="hover:text-orange-300">{t.nav.pricing}</a></li>
             </ul>
           </div>

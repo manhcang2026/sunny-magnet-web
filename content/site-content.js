@@ -41,17 +41,12 @@ export const siteContent = {
       url: '/images/sunny/sunny-pricing-final.webp',
       alt: 'Photo magnets',
     },
-    gallery: [
-      { url: 'https://images.pexels.com/photos/15555956/pexels-photo-15555956.jpeg', label: 'Family fridge' },
-      { url: 'https://images.pexels.com/photos/15555954/pexels-photo-15555954.jpeg', label: 'Travel memories' },
-      { url: 'https://images.pexels.com/photos/17210076/pexels-photo-17210076.jpeg', label: 'Sunny mornings' },
-      { url: 'https://images.pexels.com/photos/2769188/pexels-photo-2769188.jpeg', label: 'Photo magnet collection' },
-      { url: 'https://images.pexels.com/photos/1303087/pexels-photo-1303087.jpeg', label: 'Premium gift box' },
-      { url: 'https://images.pexels.com/photos/15569097/pexels-photo-15569097.jpeg', label: 'Kitchen classics' },
-    ],
+    processVideo: {
+      src: '/videos/sunny-magnet-process.mp4',
+      poster: '/images/sunny/process/sunny-magnet-process-poster.webp',
+    },
   },
   labels: {
-    gallery: 'Gallery',
     pricing: 'Pricing',
     howSteps: '3 steps',
     popular: 'POPULAR',
@@ -62,7 +57,7 @@ export const siteContent = {
   },
   translations: {
   en: {
-    nav: { how: 'How it works', gallery: 'Gallery', pricing: 'Pricing', order: 'Order Now' },
+    nav: { how: 'How it works', process: "How it's made", pricing: 'Pricing', order: 'Order Now' },
     hero: {
       badge: 'Made with love in Vietnam ☀️',
       title: 'Turn your memories into',
@@ -89,9 +84,15 @@ export const siteContent = {
         { title: 'Gift-ready packaging', desc: 'Every order arrives in a beautiful premium gift box.' },
       ],
     },
-    gallery: {
-      title: 'A little gallery on your fridge',
-      subtitle: 'Realistic mockups — this is what your memories will look like every morning.',
+    process: {
+      badge: 'Inside Sunny Magnet',
+      title: 'How a Sunny Magnet is made',
+      subtitle: 'From a favorite photo to a finished magnet — take a quick look inside the Sunny Magnet workshop.',
+      steps: [
+        { title: 'Prepare', desc: 'Your photo is prepared and checked before production.' },
+        { title: 'Press & finish', desc: 'Each piece is pressed and carefully finished by hand.' },
+        { title: 'Final check', desc: 'Every magnet is checked before it is ready to leave the workshop.' },
+      ],
     },
     pricing: {
       title: 'Simple, honest pricing',
@@ -213,7 +214,7 @@ export const siteContent = {
     },
   },
   vi: {
-    nav: { how: 'Cách đặt hàng', gallery: 'Bộ sưu tập', pricing: 'Bảng giá', order: 'Đặt mua ngay' },
+    nav: { how: 'Cách đặt hàng', process: 'Quy trình', pricing: 'Bảng giá', order: 'Đặt mua ngay' },
     hero: {
       badge: 'Sản xuất tại Việt Nam ☀️',
       title: 'Biến kỷ niệm thành',
@@ -240,9 +241,15 @@ export const siteContent = {
         { title: 'Hộp quà sang trọng', desc: 'Mỗi đơn hàng đều đóng gói trong hộp quà premium.' },
       ],
     },
-    gallery: {
-      title: 'Một triển lãm nhỏ trên tủ lạnh',
-      subtitle: 'Ảnh mockup thực tế — đây là những gì bạn thấy mỗi sáng.',
+    process: {
+      badge: 'Xưởng Sunny Magnet',
+      title: 'Một chiếc Sunny Magnet được tạo ra thế nào?',
+      subtitle: 'Từ tấm ảnh bạn yêu thích đến chiếc nam châm hoàn thiện — xem một vòng tại xưởng Sunny Magnet.',
+      steps: [
+        { title: 'Chuẩn bị', desc: 'Ảnh được chuẩn bị và kiểm tra trước khi đưa vào sản xuất.' },
+        { title: 'Ép & hoàn thiện', desc: 'Từng chiếc nam châm được ép và hoàn thiện cẩn thận bằng tay.' },
+        { title: 'Kiểm tra thành phẩm', desc: 'Mỗi chiếc đều được kiểm tra trước khi rời xưởng.' },
+      ],
     },
     pricing: {
       title: 'Giá minh bạch, đơn giản',

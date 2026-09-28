@@ -19,7 +19,7 @@ export default function Nav({ lang, setLang, t }) {
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-700">
           <a href="#how" className="hover:text-orange-500 transition">{t.nav.how}</a>
           <a href="#studio" className="hover:text-orange-500 transition">{t.studio.badge}</a>
-          <a href="#gallery" className="hover:text-orange-500 transition">{t.nav.gallery}</a>
+          <a href="#process" className="hover:text-orange-500 transition">{t.nav.process}</a>
           <a href="#pricing" className="hover:text-orange-500 transition">{t.nav.pricing}</a>
         </nav>
         <div className="flex items-center gap-2">
