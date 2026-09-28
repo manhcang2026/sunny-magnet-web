@@ -48,7 +48,6 @@ export const siteContent = {
   },
   labels: {
     pricing: 'Pricing',
-    howSteps: '3 steps',
     popular: 'POPULAR',
     languageToggle: 'Toggle language',
     vietQrAlt: 'VietQR',
@@ -104,13 +103,16 @@ export const siteContent = {
       cta: 'Order now',
     },
     how: {
-      title: 'How it works',
-      subtitle: '3 sunny steps from photo to fridge.',
+      badge: 'How it works',
+      title: 'Ordering your photo magnets is simple',
+      subtitle: 'Just a few steps to turn your favorite photos into beautiful magnets.',
       steps: [
-        { title: 'Upload your photos', desc: 'Drag & drop your favorite memories, right from your phone.' },
-        { title: 'Preview & edit', desc: 'We help you crop, enhance and preview each magnet.' },
-        { title: 'Fast delivery', desc: 'We print, pack in a premium box and ship to your door.' },
+        { title: 'Upload photos', desc: 'Choose the photos you want to turn into magnets.' },
+        { title: 'Preview & adjust', desc: 'Crop, adjust and preview each magnet in Magnet Studio.' },
+        { title: 'Place your order', desc: 'Fill in your shipping details and place your order to receive an order code.' },
+        { title: 'Payment & confirmation', desc: 'Scan the VietQR code to pay. Your order will be sent to production after payment is completed.' },
       ],
+      note: 'Because each order is custom-made from your photos, production begins after payment is completed.',
     },
     form: {
       title: 'Place your order',
@@ -261,13 +263,16 @@ export const siteContent = {
       cta: 'Đặt mua ngay',
     },
     how: {
-      title: 'Cách đặt hàng',
-      subtitle: '3 bước đơn giản từ ảnh đến tủ lạnh.',
+      badge: 'Cách đặt hàng',
+      title: 'Đặt nam châm rất đơn giản',
+      subtitle: 'Chỉ vài bước là bạn có thể biến những tấm ảnh yêu thích thành nam châm xinh xắn.',
       steps: [
-        { title: 'Tải ảnh lên', desc: 'Kéo thả những kỷ niệm yêu thích, ngay từ điện thoại.' },
-        { title: 'Xem & chỉnh sửa', desc: 'Chúng tôi giúp bạn cắt, tăng sáng và xem trước từng nam châm.' },
-        { title: 'Giao hàng nhanh', desc: 'In, đóng hộp quà cao cấp và giao tận nhà.' },
+        { title: 'Tải ảnh lên', desc: 'Chọn những ảnh bạn muốn làm nam châm.' },
+        { title: 'Chỉnh & xem trước', desc: 'Cắt, căn chỉnh và xem trước từng tấm trong Magnet Studio.' },
+        { title: 'Gửi đơn hàng', desc: 'Điền thông tin nhận hàng và gửi đơn để hệ thống tạo mã đơn.' },
+        { title: 'Thanh toán & xác nhận', desc: 'Quét mã VietQR để thanh toán. Đơn hàng sẽ được đưa vào sản xuất sau khi thanh toán thành công.' },
       ],
+      note: 'Sản phẩm được làm riêng theo ảnh của bạn, vì vậy đơn hàng sẽ bắt đầu sản xuất sau khi thanh toán thành công.',
     },
     form: {
       title: 'Đặt đơn hàng của bạn',
