@@ -51,6 +51,29 @@ Google may omit a refresh token in subsequent responses: retain the existing
 stored token rather than replacing it with `undefined`. Invalid/revoked grants
 require a later protected owner/admin reauthorization flow.
 
+### Local owner bootstrap
+
+`bootstrap-local.mjs` is a one-time, owner/admin-only local utility. It starts a
+loopback callback on `http://localhost:8787/oauth/google/callback`, requests only
+the `drive.file` scope, creates the application root and its `Orders` child, and
+writes the folder IDs and refresh token to the requested result file.
+
+Keep both the Google OAuth Web Client credential file and the generated result
+file outside this repository. The result contains a refresh token and is
+sensitive. Do not upload either file to ChatGPT or GitHub, and do not share them.
+The utility refuses repository paths and refuses to overwrite an existing result.
+
+Windows example (the files are not provided by this repository):
+
+```powershell
+node backend/drive/bootstrap-local.mjs --credentials "C:\Users\Admin\Documents\SunnyMagnetSecrets\oauth-client.json" --output "C:\Users\Admin\Documents\SunnyMagnetSecrets\drive-bootstrap-result.json"
+```
+
+OAuth consent-screen apps in Testing status issue refresh tokens that expire
+after 7 days. After publishing the app to Production, repeat owner authorization
+if required. This bootstrap utility does not make the broader integration
+production-ready.
+
 ## Working-tree sandbox
 
 On first bootstrap, call `ensureDriveRoot({ drive })`; it creates
