@@ -1,4 +1,4 @@
-﻿# Sunny Magnet Backend V2 Architecture & Production System
+# Sunny Magnet Backend V2 Architecture & Production System
 
 **Status:** Design Lock / Pre-implementation
 **Last updated:** 2026-09-28
@@ -8,57 +8,57 @@
 
 ---
 
-## 1. Má»¥c Ä‘Ã­ch
+## 1. Mục đích
 
-TÃ i liá»‡u nÃ y lÃ  tÃ i liá»‡u tham chiáº¿u chÃ­nh cho Backend V2 cá»§a Sunny Magnet.
+Tài liệu này là tài liệu tham chiếu chính cho Backend V2 của Sunny Magnet.
 
-Backend V2 pháº£i má»Ÿ rá»™ng Ä‘Æ°á»£c cho:
+Backend V2 phải mở rộng được cho:
 
-- Ä‘Æ¡n hÃ ng láº»;
-- Magnet Studio tá»± chá»‰nh áº£nh;
-- Sunny Assist â€” Sunny Magnet chá»‰nh áº£nh giÃºp khÃ¡ch;
-- quáº£n lÃ½ thanh toÃ¡n;
-- quáº£n lÃ½ sáº£n xuáº¥t;
-- tá»± Ä‘á»™ng táº¡o file in A4;
+- đơn hàng lẻ;
+- Magnet Studio tự chỉnh ảnh;
+- Sunny Assist — Sunny Magnet chỉnh ảnh giúp khách;
+- quản lý thanh toán;
+- quản lý sản xuất;
+- tự động tạo file in A4;
 - Google Drive file storage;
 - dashboard admin;
-- cá»™ng tÃ¡c viÃªn / Ä‘iá»ƒm bÃ¡n / affiliate;
-- hoa há»“ng vÃ  payout;
-- sá»± kiá»‡n cÃ³ quota;
-- bÃ¡o cÃ¡o sá»± kiá»‡n;
-- email theo tÃªn miá»n;
-- webhook thanh toÃ¡n trong tÆ°Æ¡ng lai.
+- cộng tác viên / điểm bán / affiliate;
+- hoa hồng và payout;
+- sự kiện có quota;
+- báo cáo sự kiện;
+- email theo tên miền;
+- webhook thanh toán trong tương lai.
 
-TÃ i liá»‡u nÃ y khÃ³a **kiáº¿n trÃºc vÃ  business rules cáº¥p há»‡ thá»‘ng** trÆ°á»›c khi code schema/API cá»¥ thá»ƒ.
+Tài liệu này khóa **kiến trúc và business rules cấp hệ thống** trước khi code schema/API cụ thể.
 
 ---
 
-## 2. CÃ¡c nguyÃªn táº¯c Ä‘Ã£ chá»‘t
+## 2. Các nguyên tắc đã chốt
 
-### 2.1 Guest checkout lÃ  máº·c Ä‘á»‹nh
+### 2.1 Guest checkout là mặc định
 
-KhÃ¡ch mua láº» **khÃ´ng báº¯t buá»™c Ä‘Äƒng nháº­p**.
+Khách mua lẻ **không bắt buộc đăng nhập**.
 
-Login báº¯t buá»™c vá»›i:
+Login bắt buộc với:
 
 - Admin;
 - Staff;
-- Partner / Ä‘iá»ƒm bÃ¡n;
+- Partner / điểm bán;
 - CTV;
 - Affiliate;
-- Event organizer náº¿u sau nÃ y má»Ÿ portal riÃªng.
+- Event organizer nếu sau này mở portal riêng.
 
-Customer account cÃ³ thá»ƒ bá»• sung sau dÆ°á»›i dáº¡ng optional.
+Customer account có thể bổ sung sau dưới dạng optional.
 
-### 2.2 Self-service lÃ  luá»“ng Æ°u tiÃªn
+### 2.2 Self-service là luồng ưu tiên
 
-Sunny Magnet Æ°u tiÃªn khÃ¡ch tá»± chá»‰nh áº£nh Ä‘á»ƒ giáº£m workload vÃ  tÄƒng tá»‘c Ä‘á»™ xá»­ lÃ½.
+Sunny Magnet ưu tiên khách tự chỉnh ảnh để giảm workload và tăng tốc độ xử lý.
 
-Sunny Assist lÃ  option thá»© cáº¥p, Ã¡p dá»¥ng tá»« **6 nam chÃ¢m trá»Ÿ lÃªn**.
+Sunny Assist là option thứ cấp, áp dụng từ **6 nam châm trở lên**.
 
-### 2.3 Supabase giá»¯ business data; Google Drive giá»¯ file
+### 2.3 Supabase giữ business data; Google Drive giữ file
 
-**Supabase** lÃ  source of truth cho:
+**Supabase** là source of truth cho:
 
 - order;
 - order item;
@@ -74,38 +74,38 @@ Sunny Assist lÃ  option thá»© cáº¥p, Ã¡p dá»¥ng tá»« **6 nam ch�
 - auth;
 - audit data.
 
-**Google Drive** lÃ  file storage chÃ­nh cho:
+**Google Drive** là file storage chính cho:
 
-- áº£nh gá»‘c;
+- ảnh gốc;
 - artwork final;
 - PDF in;
 - preview.
 
-KhÃ´ng láº¥y Supabase Storage lÃ m kho áº£nh chÃ­nh á»Ÿ giai Ä‘oáº¡n Ä‘áº§u.
+Không lấy Supabase Storage làm kho ảnh chính ở giai đoạn đầu.
 
-### 2.4 GAS khÃ´ng cÃ²n lÃ  business engine
+### 2.4 GAS không còn là business engine
 
-GAS V2 náº¿u cÃ²n dÃ¹ng chá»‰ nÃªn lÃ  **Drive bridge / file service**:
+GAS V2 nếu còn dùng chỉ nên là **Drive bridge / file service**:
 
-- táº¡o folder Drive;
+- tạo folder Drive;
 - upload original;
 - upload artwork;
 - upload PDF;
 - upload preview;
-- tráº£ `fileId`, `folderId` vÃ  metadata vá» backend.
+- trả `fileId`, `folderId` và metadata về backend.
 
-KhÃ´ng Ä‘áº·t pricing, promotion, commission, event quota hoáº·c order state trong GAS.
+Không đặt pricing, promotion, commission, event quota hoặc order state trong GAS.
 
-### 2.5 Google Sheet khÃ´ng cÃ²n lÃ  database chÃ­nh
+### 2.5 Google Sheet không còn là database chính
 
-Sheet chá»‰ dÃ¹ng cho:
+Sheet chỉ dùng cho:
 
 - export;
-- bÃ¡o cÃ¡o;
-- Ä‘á»‘i soÃ¡t;
-- file gá»­i partner/event organizer khi cáº§n.
+- báo cáo;
+- đối soát;
+- file gửi partner/event organizer khi cần.
 
-Náº¿u Sheet lá»—i thÃ¬ website/order engine váº«n pháº£i hoáº¡t Ä‘á»™ng bÃ¬nh thÆ°á»ng.
+Nếu Sheet lỗi thì website/order engine vẫn phải hoạt động bình thường.
 
 ---
 
@@ -113,49 +113,49 @@ Náº¿u Sheet lá»—i thÃ¬ website/order engine váº«n pháº£i hoáº¡
 
 ```text
                          SUNNYMAGNET.SITE
-                               â”‚
-            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-            â”‚                                     â”‚
+                               │
+            ┌──────────────────┴──────────────────┐
+            │                                     │
        PUBLIC WEBSITE                        AUTH PORTALS
-            â”‚                                     â”‚
+            │                                     │
     Guest / Customer                 Admin / Staff / Partner
-            â”‚                                     â”‚
-            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                               â”‚
+            │                                     │
+            └──────────────────┬──────────────────┘
+                               │
                          BACKEND API
                      Oracle VPS / Next.js
-                               â”‚
-        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-        â”‚                      â”‚                        â”‚
-        â–¼                      â–¼                        â–¼
+                               │
+        ┌──────────────────────┼────────────────────────┐
+        │                      │                        │
+        ▼                      ▼                        ▼
    SUPABASE DB            FILE SERVICE             EMAIL SERVICE
-   + Supabase Auth       GAS â†’ Drive initially       domain email
-        â”‚                      â”‚
-        â”‚                      â–¼
-        â”‚                 GOOGLE DRIVE
-        â”‚                      â”‚
-        â”‚          â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-        â”‚          â–¼           â–¼           â–¼
-        â”‚      ORIGINALS   ARTWORKS     PRINT FILES
-        â”‚
-        â–¼
+   + Supabase Auth       GAS → Drive initially       domain email
+        │                      │
+        │                      ▼
+        │                 GOOGLE DRIVE
+        │                      │
+        │          ┌───────────┼───────────┐
+        │          ▼           ▼           ▼
+        │      ORIGINALS   ARTWORKS     PRINT FILES
+        │
+        ▼
      WORKERS
-        â”‚
-        â”œâ”€â”€ Print Generator
-        â”œâ”€â”€ commission calculation
-        â”œâ”€â”€ event quota
-        â””â”€â”€ notification jobs
+        │
+        ├── Print Generator
+        ├── commission calculation
+        ├── event quota
+        └── notification jobs
 ```
 
 ---
 
 ## 4. Order model chung
 
-Sunny Magnet chá»‰ nÃªn cÃ³ **má»™t Order Engine**.
+Sunny Magnet chỉ nên có **một Order Engine**.
 
-KhÃ´ng táº¡o há»‡ thá»‘ng order riÃªng cho retail, partner vÃ  event.
+Không tạo hệ thống order riêng cho retail, partner và event.
 
-VÃ­ dá»¥ cÃ¡c field phÃ¢n loáº¡i:
+Ví dụ các field phân loại:
 
 ```text
 order_channel:
@@ -173,7 +173,7 @@ source:
 - STAFF
 ```
 
-CÃ¡c use case sau dÃ¹ng cÃ¹ng core order system:
+Các use case sau dùng cùng core order system:
 
 ```text
 Retail + Self Service
@@ -188,39 +188,39 @@ Event + Guest Paid
 
 ## 5. Retail workflow
 
-### 5.1 Self Service â€” flow máº·c Ä‘á»‹nh
+### 5.1 Self Service — flow mặc định
 
 ```text
-Upload áº£nh
-    â†“
+Upload ảnh
+    ↓
 Magnet Studio
-    â†“
+    ↓
 Crop / preview / adjust
-    â†“
+    ↓
 Final artworks
-    â†“
-ThÃ´ng tin giao hÃ ng
-    â†“
+    ↓
+Thông tin giao hàng
+    ↓
 Create Order
-    â†“
+    ↓
 VietQR
-    â†“
+    ↓
 PAYMENT_PENDING
-    â†“
-Admin xÃ¡c nháº­n thanh toÃ¡n thá»§ cÃ´ng
-    â†“
+    ↓
+Admin xác nhận thanh toán thủ công
+    ↓
 PAID
-    â†“
+    ↓
 Print Generator
-    â†“
+    ↓
 READY_TO_PRINT
-    â†“
+    ↓
 IN_PRODUCTION
-    â†“
+    ↓
 PACKED
-    â†“
+    ↓
 DELIVERY / PICKUP
-    â†“
+    ↓
 COMPLETED
 ```
 
@@ -235,82 +235,82 @@ SUNNY_ASSIST_MIN_QUANTITY = 6
 Flow:
 
 ```text
-Upload >= 6 áº£nh gá»‘c
-    â†“
-KhÃ´ng báº¯t buá»™c má»Ÿ editor
-    â†“
+Upload >= 6 ảnh gốc
+    ↓
+Không bắt buộc mở editor
+    ↓
 Create Order
-    â†“
+    ↓
 PAYMENT_PENDING
-    â†“
+    ↓
 PAID
-    â†“
+    ↓
 NEEDS_ARTWORK
-    â†“
-Staff chá»‰nh áº£nh
-    â†“
+    ↓
+Staff chỉnh ảnh
+    ↓
 ARTWORK_READY
-    â†“
+    ↓
 Print Generator
-    â†“
+    ↓
 READY_TO_PRINT
 ```
 
-Náº¿u dÆ°á»›i 6 áº£nh:
+Nếu dưới 6 ảnh:
 
-- yÃªu cáº§u thÃªm áº£nh; hoáº·c
-- chuyá»ƒn vá» Self Service.
+- yêu cầu thêm ảnh; hoặc
+- chuyển về Self Service.
 
-YÃªu cáº§u chá»‰nh sá»­a Ä‘áº·c biá»‡t trao Ä‘á»•i qua Zalo/nhÃ¢n viÃªn há»— trá»£.
+Yêu cầu chỉnh sửa đặc biệt trao đổi qua Zalo/nhân viên hỗ trợ.
 
 ---
 
 ## 6. Payment rules
 
-### Hiá»‡n táº¡i
+### Hiện tại
 
-Thanh toÃ¡n Ä‘Æ°á»£c xÃ¡c nháº­n **thá»§ cÃ´ng**:
+Thanh toán được xác nhận **thủ công**:
 
 ```text
-PENDING â†’ admin xÃ¡c nháº­n â†’ PAID
+PENDING → admin xác nhận → PAID
 ```
 
-### TÆ°Æ¡ng lai
+### Tương lai
 
-CÃ³ thá»ƒ ná»‘i webhook ngÃ¢n hÃ ng/payment provider. Webhook chá»‰ thay cÃ¡ch chuyá»ƒn `PENDING â†’ PAID`, khÃ´ng thay kiáº¿n trÃºc order.
+Có thể nối webhook ngân hàng/payment provider. Webhook chỉ thay cách chuyển `PENDING → PAID`, không thay kiến trúc order.
 
 ### COD
 
-**KhÃ´ng COD.** ÄÃ¢y lÃ  sáº£n pháº©m custom.
+**Không COD.** Đây là sản phẩm custom.
 
 ### Refund
 
-Business rule hiá»‡n táº¡i:
+Business rule hiện tại:
 
-> **KhÃ´ng hoÃ n tiá»n dÆ°á»›i má»i hÃ¬nh thá»©c.**
+> **Không hoàn tiền dưới mọi hình thức.**
 
 ---
 
 ## 7. Shipping rules
 
-### Giao vá» Ä‘á»‹a chá»‰ khÃ¡ch
+### Giao về địa chỉ khách
 
-- khÃ¡ch tráº£ phÃ­ ship;
-- phÃ­ ship khÃ´ng tÃ­nh vÃ o partner commission.
+- khách trả phí ship;
+- phí ship không tính vào partner commission.
 
-### Nháº­n táº¡i Ä‘iá»ƒm bÃ¡n / partner
+### Nhận tại điểm bán / partner
 
-- Sunny Magnet freeship tá»›i Ä‘iá»ƒm bÃ¡n;
-- partner/CTV giao hoáº·c tráº£ trá»±c tiáº¿p cho khÃ¡ch;
-- shipping fee Ä‘á»‘i vá»›i khÃ¡ch = 0.
+- Sunny Magnet freeship tới điểm bán;
+- partner/CTV giao hoặc trả trực tiếp cho khách;
+- shipping fee đối với khách = 0.
 
-Order form cáº§n hiá»ƒn thá»‹ rÃµ hai lá»±a chá»n nÃ y.
+Order form cần hiển thị rõ hai lựa chọn này.
 
 ---
 
 ## 8. Order state model
 
-KhÃ´ng dÃ¹ng duy nháº¥t má»™t cá»™t `status` cho má»i thá»©.
+Không dùng duy nhất một cột `status` cho mọi thứ.
 
 ### Payment status
 
@@ -330,13 +330,13 @@ READY
 Self Service:
 
 ```text
-DRAFT â†’ READY
+DRAFT → READY
 ```
 
 Sunny Assist:
 
 ```text
-NEEDS_ARTWORK â†’ READY
+NEEDS_ARTWORK → READY
 ```
 
 ### Production status
@@ -362,21 +362,21 @@ EVENT
 
 ## 9. Completion rule
 
-`COMPLETED` lÃ  tráº¡ng thÃ¡i trigger commission.
+`COMPLETED` là trạng thái trigger commission.
 
-Commission **khÃ´ng phÃ¡t sinh khi PAID**.
+Commission **không phát sinh khi PAID**.
 
 ```text
-Order cÃ³ partner/ref
-        â†“
+Order có partner/ref
+        ↓
 COMPLETED
-        â†“
+        ↓
 Create commission ledger
 ```
 
 ---
 
-## 10. Core database schema â€” logical design
+## 10. Core database schema — logical design
 
 ### 10.1 `orders`
 
@@ -444,16 +444,16 @@ created_at
 updated_at
 ```
 
-Lá»£i Ã­ch:
+Lợi ích:
 
-- sá»­a riÃªng tá»«ng magnet;
-- remake riÃªng má»™t item;
-- Ä‘á»‘i chiáº¿u original â†” final;
-- regenerate print sheet khÃ´ng áº£nh hÆ°á»Ÿng áº£nh khÃ¡c.
+- sửa riêng từng magnet;
+- remake riêng một item;
+- đối chiếu original ↔ final;
+- regenerate print sheet không ảnh hưởng ảnh khác.
 
 ### 10.3 `assets`
 
-Supabase chá»‰ lÆ°u metadata.
+Supabase chỉ lưu metadata.
 
 ```text
 id
@@ -501,7 +501,7 @@ generated_by
 error_message
 ```
 
-KhÃ´ng overwrite print file cÅ©.
+Không overwrite print file cũ.
 
 ---
 
@@ -509,122 +509,122 @@ KhÃ´ng overwrite print file cÅ©.
 
 ```text
 Sunny Magnet/
-â””â”€â”€ Orders/
-    â””â”€â”€ 2026/
-        â””â”€â”€ 09/
-            â””â”€â”€ SM-20260928-0001/
-                â”‚
-                â”œâ”€â”€ 01_ORIGINALS/
-                â”‚   â”œâ”€â”€ 001.jpg
-                â”‚   â”œâ”€â”€ 002.jpg
-                â”‚   â””â”€â”€ ...
-                â”‚
-                â”œâ”€â”€ 02_ARTWORKS/
-                â”‚   â”œâ”€â”€ 001-final.jpg
-                â”‚   â”œâ”€â”€ 002-final.jpg
-                â”‚   â””â”€â”€ ...
-                â”‚
-                â””â”€â”€ 03_PRINT/
-                    â”œâ”€â”€ page-01-v1.pdf
-                    â”œâ”€â”€ page-01-v1-preview.webp
-                    â””â”€â”€ ...
+└── Orders/
+    └── 2026/
+        └── 09/
+            └── SM-20260928-0001/
+                │
+                ├── 01_ORIGINALS/
+                │   ├── 001.jpg
+                │   ├── 002.jpg
+                │   └── ...
+                │
+                ├── 02_ARTWORKS/
+                │   ├── 001-final.jpg
+                │   ├── 002-final.jpg
+                │   └── ...
+                │
+                └── 03_PRINT/
+                    ├── page-01-v1.pdf
+                    ├── page-01-v1-preview.webp
+                    └── ...
 ```
 
-Sunny Magnet giá»¯ cáº£:
+Sunny Magnet giữ cả:
 
-1. áº£nh gá»‘c khÃ¡ch upload;
+1. ảnh gốc khách upload;
 2. artwork final;
 3. PDF in;
 4. preview.
 
-Hiá»‡n táº¡i giá»¯ file 100%; viá»‡c backup/xÃ³a do owner xá»­ lÃ½ thá»§ cÃ´ng.
+Hiện tại giữ file 100%; việc backup/xóa do owner xử lý thủ công.
 
 ---
 
-## 12. Magnet Studio contract vá»›i backend
+## 12. Magnet Studio contract với backend
 
-Magnet Studio khÃ´ng pháº£i database.
+Magnet Studio không phải database.
 
-Studio chá»‹u trÃ¡ch nhiá»‡m:
+Studio chịu trách nhiệm:
 
 - preview;
 - crop/pan/zoom;
 - adjustment;
-- táº¡o artwork final Ä‘á»‘i vá»›i Self Service.
+- tạo artwork final đối với Self Service.
 
-Backend pháº£i lÆ°u:
+Backend phải lưu:
 
 - original;
 - parameters;
 - final artwork;
-- mapping original â†” final.
+- mapping original ↔ final.
 
-### Mode A â€” Self Service
+### Mode A — Self Service
 
-Luá»“ng Æ°u tiÃªn:
+Luồng ưu tiên:
 
 ```text
 Upload
-â†’ auto-valid crop
-â†’ khÃ¡ch chá»‰nh náº¿u muá»‘n
-â†’ final artwork
+→ auto-valid crop
+→ khách chỉnh nếu muốn
+→ final artwork
 ```
 
-### Mode B â€” Sunny Assist
+### Mode B — Sunny Assist
 
-Option thá»© cáº¥p:
+Option thứ cấp:
 
 ```text
-KhÃ´ng muá»‘n tá»± chá»‰nh?
-Sunny chá»‰nh áº£nh giÃºp báº¡n miá»…n phÃ­ cho Ä‘Æ¡n tá»« 6 táº¥m.
+Không muốn tự chỉnh?
+Sunny chỉnh ảnh giúp bạn miễn phí cho đơn từ 6 tấm.
 ```
 
 ```text
 Upload originals
-â†’ no final artwork yet
-â†’ NEEDS_ARTWORK
+→ no final artwork yet
+→ NEEDS_ARTWORK
 ```
 
 ---
 
-## 13. Print Generator â€” production spec
+## 13. Print Generator — production spec
 
 ### 13.1 Golden sample
 
-`104.pdf` lÃ  file chuáº©n hiá»‡n Ä‘ang Ä‘Æ°á»£c Sunny Magnet mang Ä‘i in.
+`104.pdf` là file chuẩn hiện đang được Sunny Magnet mang đi in.
 
-Print luÃ´n dÃ¹ng:
+Print luôn dùng:
 
 ```text
 A4
 Actual Size / 100%
 ```
 
-**KhÃ´ng dÃ¹ng Fit to Page.**
+**Không dùng Fit to Page.**
 
 ### 13.2 Template
 
-Má»™t trang cÃ³ tá»‘i Ä‘a:
+Một trang có tối đa:
 
 ```text
 6 magnets
-2 columns Ã— 3 rows
+2 columns × 3 rows
 ```
 
-áº¢nh khÃ¡ch chá»‰ Ä‘Æ°á»£c chÃ¨n vÃ o **vÃ¹ng hÃ¬nh vuÃ´ng trung tÃ¢m**.
+Ảnh khách chỉ được chèn vào **vùng hình vuông trung tâm**.
 
-Pháº£i giá»¯ nguyÃªn:
+Phải giữ nguyên:
 
-- hÃ¬nh dáº¡ng cell;
+- hình dạng cell;
 - flap;
-- Ä‘Æ°á»ng cáº¯t;
+- đường cắt;
 - text `www.sunnymagnet.site`;
-- tá»a Ä‘á»™;
-- kÃ­ch thÆ°á»›c váº­t lÃ½.
+- tọa độ;
+- kích thước vật lý.
 
 ### 13.3 Fill order
 
-Fill **theo hÃ ng**:
+Fill **theo hàng**:
 
 ```text
 1  2
@@ -632,7 +632,7 @@ Fill **theo hÃ ng**:
 5  6
 ```
 
-VÃ­ dá»¥ 3 áº£nh:
+Ví dụ 3 ảnh:
 
 ```text
 [ 1 ][ 2 ]
@@ -640,7 +640,7 @@ VÃ­ dá»¥ 3 áº£nh:
 [   ][   ]
 ```
 
-VÃ­ dá»¥ 8 áº£nh:
+Ví dụ 8 ảnh:
 
 ```text
 PAGE 1
@@ -656,25 +656,25 @@ PAGE 2
 
 ### 13.4 Unused slots
 
-Ã” chÆ°a dÃ¹ng pháº£i **100% tráº¯ng**.
+Ô chưa dùng phải **100% trắng**.
 
-KhÃ´ng render:
+Không render:
 
 - border;
-- Ä‘Æ°á»ng cáº¯t;
+- đường cắt;
 - URL;
 - placeholder;
 - template cell.
 
-LÃ½ do: pháº§n giáº¥y cÃ²n tráº¯ng Ä‘Æ°á»£c táº­n dá»¥ng Ä‘á»ƒ in láº¡i.
+Lý do: phần giấy còn trắng được tận dụng để in lại.
 
-VÃ¬ váº­y Print Generator **khÃ´ng dÃ¹ng nguyÃªn trang template 6 Ã´ lÃ m background**.
+Vì vậy Print Generator **không dùng nguyên trang template 6 ô làm background**.
 
-Generator pháº£i cÃ³ **master magnet cell** vÃ  chá»‰ render cell vÃ o slot cÃ³ dá»¯ liá»‡u.
+Generator phải có **master magnet cell** và chỉ render cell vào slot có dữ liệu.
 
 ### 13.5 Output
 
-Má»—i print job táº¡o:
+Mỗi print job tạo:
 
 ```text
 1 PDF in
@@ -682,23 +682,23 @@ Má»—i print job táº¡o:
 1 preview image
 ```
 
-Náº¿u order > 6 thÃ¬ PDF cÃ³ nhiá»u trang.
+Nếu order > 6 thì PDF có nhiều trang.
 
 ### 13.6 Acceptance criteria
 
-Print Generator chá»‰ pass khi:
+Print Generator chỉ pass khi:
 
-- khá»• A4 Ä‘Ãºng;
-- Actual Size 100% Ä‘Ãºng;
-- slot Ä‘Ãºng tá»a Ä‘á»™;
-- kÃ­ch thÆ°á»›c magnet Ä‘Ãºng;
-- vÃ¹ng áº£nh Ä‘Ãºng;
-- line/text Ä‘Ãºng;
-- slot tráº¯ng hoÃ n toÃ n tráº¯ng.
+- khổ A4 đúng;
+- Actual Size 100% đúng;
+- slot đúng tọa độ;
+- kích thước magnet đúng;
+- vùng ảnh đúng;
+- line/text đúng;
+- slot trắng hoàn toàn trắng.
 
-Prototype pháº£i so trá»±c tiáº¿p vá»›i `104.pdf`.
+Prototype phải so trực tiếp với `104.pdf`.
 
-Sai lá»‡ch váº­t lÃ½ Ä‘Ã¡ng ká»ƒ, Ä‘áº·c biá»‡t gáº§n má»©c 1 mm, chÆ°a Ä‘Æ°á»£c coi lÃ  pass.
+Sai lệch vật lý đáng kể, đặc biệt gần mức 1 mm, chưa được coi là pass.
 
 ---
 
@@ -729,7 +729,7 @@ status:
 - SUSPENDED
 ```
 
-Referral URL vÃ­ dá»¥:
+Referral URL ví dụ:
 
 ```text
 https://sunnymagnet.site/?ref=doitac042
@@ -737,13 +737,13 @@ https://sunnymagnet.site/?ref=doitac042
 
 ### Attribution rule
 
-> Partner attribution láº¥y theo `ref` Ä‘ang tá»“n táº¡i **táº¡i thá»i Ä‘iá»ƒm khÃ¡ch submit order**.
+> Partner attribution lấy theo `ref` đang tồn tại **tại thời điểm khách submit order**.
 
-KhÃ´ng cáº§n attribution window phá»©c táº¡p.
+Không cần attribution window phức tạp.
 
 ### Commission snapshot
 
-Order pháº£i snapshot:
+Order phải snapshot:
 
 ```text
 partner_id
@@ -751,21 +751,21 @@ commission_type_snapshot
 commission_value_snapshot
 ```
 
-Náº¿u partner Ä‘á»•i commission sau nÃ y thÃ¬ order cÅ© khÃ´ng thay Ä‘á»•i.
+Nếu partner đổi commission sau này thì order cũ không thay đổi.
 
 ### Commission amount
 
-Commission tÃ­nh trÃªn **giÃ¡ trá»‹ hÃ ng hÃ³a cá»§a order**, khÃ´ng bao gá»“m shipping fee.
+Commission tính trên **giá trị hàng hóa của order**, không bao gồm shipping fee.
 
 ### Commission trigger
 
-Chá»‰ khi order `COMPLETED` má»›i táº¡o commission ledger.
+Chỉ khi order `COMPLETED` mới tạo commission ledger.
 
 ---
 
 ## 15. Commission ledger
 
-Gá»£i Ã½ báº£ng `commissions`:
+Gợi ý bảng `commissions`:
 
 ```text
 id
@@ -787,21 +787,21 @@ paid_at
 
 ## 16. Partner payout
 
-Cuá»‘i thÃ¡ng:
+Cuối tháng:
 
 ```text
 Partner
-â†“
+↓
 all UNPAID commissions
-â†“
+↓
 Create payout
-â†“
+↓
 Admin transfer
-â†“
+↓
 Mark PAID
 ```
 
-Dashboard partner cÃ³ thá»ƒ xem:
+Dashboard partner có thể xem:
 
 - Referral link;
 - Orders;
@@ -818,25 +818,25 @@ Dashboard partner cÃ³ thá»ƒ xem:
 
 ```text
 Create account
-â†“
+↓
 Apply as affiliate
-â†“
+↓
 PENDING
-â†“
+↓
 Admin approve
-â†“
+↓
 ACTIVE
-â†“
+↓
 Generate ref code
 ```
 
-Sau nÃ y cÃ³ thá»ƒ auto-approve mÃ  khÃ´ng Ä‘á»•i schema.
+Sau này có thể auto-approve mà không đổi schema.
 
 ---
 
 ## 18. Event module
 
-Event lÃ  domain riÃªng vá» business nhÆ°ng dÃ¹ng chung:
+Event là domain riêng về business nhưng dùng chung:
 
 - order item;
 - asset;
@@ -871,40 +871,40 @@ status
 
 ### SPONSORED_PACKAGE
 
-VÃ­ dá»¥:
+Ví dụ:
 
 ```text
 200 magnets
 3,000,000 VND
 ```
 
-Organizer tráº£.
+Organizer trả.
 
 ### GUEST_PAY
 
-Guest tráº£ nhÆ° retail. Organizer cÃ³ thá»ƒ nháº­n commission theo thá»a thuáº­n.
+Guest trả như retail. Organizer có thể nhận commission theo thỏa thuận.
 
 ### HYBRID
 
-VÃ­ dá»¥:
+Ví dụ:
 
 ```text
 Sponsor quota = 100
 ```
 
-Tá»« magnet #101 trá»Ÿ Ä‘i:
+Từ magnet #101 trở đi:
 
 ```text
 guest-paid
 ```
 
-ÄÃ¢y lÃ  use case chÃ­nh thá»©c cáº§n support.
+Đây là use case chính thức cần support.
 
 ---
 
 ## 20. Event guest data
 
-Event váº«n pháº£i thu Ä‘á»§:
+Event vẫn phải thu đủ:
 
 ```text
 name
@@ -913,17 +913,17 @@ email
 address
 ```
 
-LÃ½ do:
+Lý do:
 
-- organizer cáº§n thá»‘ng kÃª khÃ¡ch;
-- khÃ¡ch cÃ³ thá»ƒ order nhiá»u;
-- Sunny Magnet cÃ³ thá»ƒ gá»­i hÃ ng vá» nhÃ  sau event.
+- organizer cần thống kê khách;
+- khách có thể order nhiều;
+- Sunny Magnet có thể gửi hàng về nhà sau event.
 
 ---
 
 ## 21. Event transactions and quota
 
-Má»™t guest/session nÃªn cÃ³ record riÃªng:
+Một guest/session nên có record riêng:
 
 ```text
 event_transaction
@@ -936,20 +936,20 @@ amount
 payment_status
 ```
 
-VÃ­ dá»¥ quota remaining = 2, guest láº¥y 5:
+Ví dụ quota remaining = 2, guest lấy 5:
 
 ```text
 2 sponsor-paid
 3 guest-paid
 ```
 
-Sau Ä‘Ã³ `quota_used = quota`.
+Sau đó `quota_used = quota`.
 
 ---
 
 ## 22. Event reports
 
-Organizer cÃ³ thá»ƒ yÃªu cáº§u export:
+Organizer có thể yêu cầu export:
 
 ```text
 Guest Name
@@ -963,7 +963,7 @@ Amount
 Time
 ```
 
-Dashboard há»— trá»£:
+Dashboard hỗ trợ:
 
 ```text
 Export CSV
@@ -974,7 +974,7 @@ Export Excel
 
 ## 23. Admin dashboard
 
-Navigation dá»± kiáº¿n:
+Navigation dự kiến:
 
 ```text
 Dashboard
@@ -992,13 +992,13 @@ Settings
 
 ## 24. Order detail screen
 
-VÃ­ dá»¥:
+Ví dụ:
 
 ```text
 SM-20260928-0012
 
 Customer
-Nguyá»…n VÄƒn A
+Nguyễn Văn A
 090...
 
 Order
@@ -1035,7 +1035,7 @@ Production
 
 ## 25. Sunny Assist admin UX
 
-VÃ­ dá»¥:
+Ví dụ:
 
 ```text
 SM-...
@@ -1058,23 +1058,23 @@ Action:
 Khi artwork ready:
 
 ```text
-â†’ Print Generator
-â†’ READY_TO_PRINT
+→ Print Generator
+→ READY_TO_PRINT
 ```
 
 ---
 
 ## 26. Email architecture
 
-Há»‡ thá»‘ng má»›i khÃ´ng phá»¥ thuá»™c Gmail cÃ¡ nhÃ¢n cÅ©.
+Hệ thống mới không phụ thuộc Gmail cá nhân cũ.
 
-Má»¥c tiÃªu sender:
+Mục tiêu sender:
 
 ```text
 order@sunnymagnet.site
 ```
 
-hoáº·c:
+hoặc:
 
 ```text
 hello@sunnymagnet.site
@@ -1090,80 +1090,80 @@ SHIPPED / READY_FOR_PICKUP
 COMPLETED
 ```
 
-Marketing email tÃ¡ch riÃªng:
+Marketing email tách riêng:
 
 - consent;
 - unsubscribe;
 - campaign list;
 - segmentation.
 
-Provider chÆ°a chá»‘t; Æ°u tiÃªn free tier + custom domain + SPF/DKIM.
+Provider chưa chốt; ưu tiên free tier + custom domain + SPF/DKIM.
 
 ---
 
 ## 27. Authentication
 
-### KhÃ´ng báº¯t login
+### Không bắt login
 
 - Retail customer;
 - Event guest.
 
-### Báº¯t login
+### Bắt login
 
 - ADMIN;
 - STAFF;
 - PARTNER;
 - AFFILIATE.
 
-Supabase Auth dÃ¹ng cho nhÃ³m authenticated.
+Supabase Auth dùng cho nhóm authenticated.
 
 ---
 
 ## 28. Security rules
 
-Public website khÃ´ng Ä‘Æ°á»£c trá»±c tiáº¿p:
+Public website không được trực tiếp:
 
 - mark payment;
 - mark completed;
-- Ä‘á»c toÃ n bá»™ orders;
-- Ä‘á»c commission;
-- Ä‘á»c Drive IDs cá»§a order khÃ¡c;
+- đọc toàn bộ orders;
+- đọc commission;
+- đọc Drive IDs của order khác;
 - update production;
-- thay Ä‘á»•i partner rule.
+- thay đổi partner rule.
 
-Public chá»‰ gá»i endpoint cÃ³ kiá»ƒm soÃ¡t, vÃ­ dá»¥:
+Public chỉ gọi endpoint có kiểm soát, ví dụ:
 
 ```text
 POST /orders
 ```
 
-Admin/staff endpoint Ä‘Æ°á»£c báº£o vá»‡ báº±ng auth + role.
+Admin/staff endpoint được bảo vệ bằng auth + role.
 
 ---
 
-## 29. Legacy GAS â€” known behavior and non-reuse rules
+## 29. Legacy GAS — known behavior and non-reuse rules
 
-GAS cÅ© Ä‘Ã£ chá»©ng minh Ä‘Æ°á»£c pipeline:
+GAS cũ đã chứng minh được pipeline:
 
 ```text
 Web
-â†’ doPost
-â†’ Drive
-â†’ Sheet
-â†’ order ID
-â†’ VietQR
+→ doPost
+→ Drive
+→ Sheet
+→ order ID
+→ VietQR
 ```
 
-NhÆ°ng business rule cÅ© **khÃ´ng Ä‘Æ°á»£c copy nguyÃªn sang V2**.
+Nhưng business rule cũ **không được copy nguyên sang V2**.
 
-Äáº·c biá»‡t:
+Đặc biệt:
 
-- promotion 13 táº·ng 1 Ä‘Ã£ háº¿t hiá»‡u lá»±c;
-- V2 khÃ´ng Ä‘Æ°á»£c dÃ¹ng promotion rule cÅ©;
-- price/business rules pháº£i náº±m trong backend/database má»›i;
-- Sheet khÃ´ng pháº£i source of truth.
+- promotion 13 tặng 1 đã hết hiệu lực;
+- V2 không được dùng promotion rule cũ;
+- price/business rules phải nằm trong backend/database mới;
+- Sheet không phải source of truth.
 
-Legacy GAS chá»‰ dÃ¹ng lÃ m reference cho:
+Legacy GAS chỉ dùng làm reference cho:
 
 - Drive upload;
 - naming;
@@ -1175,16 +1175,16 @@ Legacy GAS chá»‰ dÃ¹ng lÃ m reference cho:
 
 ## 30. Supabase project strategy
 
-Dá»± kiáº¿n dÃ¹ng Supabase project sáº¡ch cho Sunny Magnet V2.
+Dự kiến dùng Supabase project sạch cho Sunny Magnet V2.
 
-Náº¿u account hiá»‡n táº¡i Ä‘Ã£ háº¿t Free project quota:
+Nếu account hiện tại đã hết Free project quota:
 
-1. táº¡o account/organization Supabase má»›i;
-2. táº¡o project Sunny Magnet V2;
-3. cÃ³ thá»ƒ invite account Supabase Ä‘ang káº¿t ná»‘i ChatGPT vá»›i role phÃ¹ há»£p, vÃ­ dá»¥ `Developer`;
-4. kiá»ƒm tra connector cÃ³ nhÃ¬n tháº¥y project má»›i trÆ°á»›c khi táº¡o schema.
+1. tạo account/organization Supabase mới;
+2. tạo project Sunny Magnet V2;
+3. invite account Supabase đang kết nối ChatGPT với role `Administrator`: tested behavior shows `Developer` is insufficient for the Supabase OAuth permissions required by the ChatGPT Supabase plugin; `Owner` is not required;
+4. kiểm tra connector có nhìn thấy project mới trước khi tạo schema.
 
-KhÃ´ng táº¡o production schema trÆ°á»›c khi access Ä‘Æ°á»£c xÃ¡c nháº­n.
+Không tạo production schema trước khi access được xác nhận.
 
 ---
 
@@ -1192,22 +1192,22 @@ KhÃ´ng táº¡o production schema trÆ°á»›c khi access Ä‘Æ°á»£c x
 
 ### 31.1 Current state
 
-Frontend Next.js hiá»‡n Ä‘ang á»Ÿ root repo:
+Frontend Next.js hiện đang ở root repo:
 
 ```text
 /
-â”œâ”€â”€ app/
-â”œâ”€â”€ components/
-â”œâ”€â”€ content/
-â”œâ”€â”€ hooks/
-â”œâ”€â”€ lib/
-â”œâ”€â”€ public/
-â”œâ”€â”€ package.json
-â”œâ”€â”€ next.config.js
-â””â”€â”€ ...
+├── app/
+├── components/
+├── content/
+├── hooks/
+├── lib/
+├── public/
+├── package.json
+├── next.config.js
+└── ...
 ```
 
-KhÃ´ng nÃªn move toÃ n bá»™ frontend ngay trong lÃºc site Ä‘ang cháº¡y á»•n vÃ¬ cÃ³ thá»ƒ áº£nh hÆ°á»Ÿng:
+Không nên move toàn bộ frontend ngay trong lúc site đang chạy ổn vì có thể ảnh hưởng:
 
 - local commands;
 - CloudPanel deployment;
@@ -1216,72 +1216,72 @@ KhÃ´ng nÃªn move toÃ n bá»™ frontend ngay trong lÃºc site Ä‘ang c
 - environment variables;
 - CI/deployment.
 
-### 31.2 Transitional repo layout â€” Ã¡p dá»¥ng trÆ°á»›c
+### 31.2 Transitional repo layout — áp dụng trước
 
 ```text
 /
-â”œâ”€â”€ app/                       # Existing frontend â€” giá»¯ nguyÃªn táº¡m thá»i
-â”œâ”€â”€ components/                # Existing frontend
-â”œâ”€â”€ content/                   # Existing frontend
-â”œâ”€â”€ hooks/                     # Existing frontend
-â”œâ”€â”€ lib/                       # Existing frontend/shared
-â”œâ”€â”€ public/                    # Existing frontend assets
-â”‚
-â”œâ”€â”€ backend/                   # NEW â€” Backend V2
-â”‚   â”œâ”€â”€ README.md
-â”‚   â”œâ”€â”€ db/
-â”‚   â”œâ”€â”€ api/
-â”‚   â”œâ”€â”€ print-generator/
-â”‚   â”œâ”€â”€ drive-bridge/
-â”‚   â”œâ”€â”€ workers/
-â”‚   â””â”€â”€ tests/
-â”‚
-â”œâ”€â”€ docs/
-â”‚   â””â”€â”€ SUNNY_BACKEND_V2_ARCHITECTURE.md
-â”‚
-â”œâ”€â”€ package.json
-â””â”€â”€ ...
+├── app/                       # Existing frontend — giữ nguyên tạm thời
+├── components/                # Existing frontend
+├── content/                   # Existing frontend
+├── hooks/                     # Existing frontend
+├── lib/                       # Existing frontend/shared
+├── public/                    # Existing frontend assets
+│
+├── backend/                   # NEW — Backend V2
+│   ├── README.md
+│   ├── db/
+│   ├── api/
+│   ├── print-generator/
+│   ├── drive-bridge/
+│   ├── workers/
+│   └── tests/
+│
+├── docs/
+│   └── SUNNY_BACKEND_V2_ARCHITECTURE.md
+│
+├── package.json
+└── ...
 ```
 
-Trong giai Ä‘oáº¡n nÃ y:
+Trong giai đoạn này:
 
 ```text
-ROOT = frontend hiá»‡n táº¡i
+ROOT = frontend hiện tại
 /backend = backend V2
 /docs = architecture/spec
 ```
 
-### 31.3 Target monorepo layout â€” chá»‰ lÃ m báº±ng task riÃªng
+### 31.3 Target monorepo layout — chỉ làm bằng task riêng
 
 ```text
 /
-â”œâ”€â”€ apps/
-â”‚   â””â”€â”€ web/
-â”‚       â”œâ”€â”€ app/
-â”‚       â”œâ”€â”€ components/
-â”‚       â”œâ”€â”€ content/
-â”‚       â”œâ”€â”€ public/
-â”‚       â””â”€â”€ ...
-â”‚
-â”œâ”€â”€ services/
-â”‚   â”œâ”€â”€ api/
-â”‚   â”œâ”€â”€ print-generator/
-â”‚   â”œâ”€â”€ drive-bridge/
-â”‚   â””â”€â”€ workers/
-â”‚
-â”œâ”€â”€ supabase/
-â”‚   â”œâ”€â”€ migrations/
-â”‚   â”œâ”€â”€ functions/
-â”‚   â””â”€â”€ seed/
-â”‚
-â”œâ”€â”€ docs/
-â”œâ”€â”€ scripts/
-â””â”€â”€ ...
+├── apps/
+│   └── web/
+│       ├── app/
+│       ├── components/
+│       ├── content/
+│       ├── public/
+│       └── ...
+│
+├── services/
+│   ├── api/
+│   ├── print-generator/
+│   ├── drive-bridge/
+│   └── workers/
+│
+├── supabase/
+│   ├── migrations/
+│   ├── functions/
+│   └── seed/
+│
+├── docs/
+├── scripts/
+└── ...
 ```
 
-**KhÃ´ng move frontend sang `apps/web` trong cÃ¹ng task vá»›i Backend V2 setup.**
+**Không move frontend sang `apps/web` trong cùng task với Backend V2 setup.**
 
-Viá»‡c move frontend pháº£i lÃ  refactor riÃªng, cÃ³ checkpoint vÃ  test deployment.
+Việc move frontend phải là refactor riêng, có checkpoint và test deployment.
 
 ---
 
@@ -1289,12 +1289,12 @@ Viá»‡c move frontend pháº£i lÃ  refactor riÃªng, cÃ³ checkpoint vÃ
 
 ```text
 backend/
-â”œâ”€â”€ db/
-â”œâ”€â”€ api/
-â”œâ”€â”€ drive-bridge/
-â”œâ”€â”€ print-generator/
-â”œâ”€â”€ workers/
-â””â”€â”€ tests/
+├── db/
+├── api/
+├── drive-bridge/
+├── print-generator/
+├── workers/
+└── tests/
 ```
 
 - `api/`: server-side order/admin endpoints;
@@ -1304,17 +1304,17 @@ backend/
 - `workers/`: commission, event quota, notifications/background jobs;
 - `tests/`: backend tests.
 
-Khi dÃ¹ng Supabase CLI, migrations nÃªn náº±m táº¡i root `/supabase/migrations/`.
+Khi dùng Supabase CLI, migrations nên nằm tại root `/supabase/migrations/`.
 
 ---
 
 ## 33. Implementation roadmap
 
-### Phase 0 â€” Design Lock
+### Phase 0 — Design Lock
 
-Status: **gáº§n hoÃ n táº¥t**.
+Status: **gần hoàn tất**.
 
-Chá»‘t:
+Chốt:
 
 - backend architecture;
 - order state;
@@ -1324,9 +1324,19 @@ Chá»‘t:
 - event;
 - Sunny Assist.
 
-### Phase 1 â€” Backend Core
+### Phase 1 — Backend Core
 
-Táº¡o:
+Status update (2026-09-28):
+
+- Supabase project `sunny-magnet-v2` is initialized (project ref `xlngzsqtoiwmirxficij`, region `ap-southeast-1`).
+- Backend Core foundation is initialized with the `orders`, `order_items`, `assets`, and `print_jobs` tables.
+- All four tables have RLS enabled. Browser roles `anon` and `authenticated` currently have no direct table access.
+- There are intentionally no RLS policies yet; public order creation will later use controlled backend endpoints.
+- Google Drive/File Pipeline, Print Generator, and Partner/Event modules are not implemented yet.
+- Git now mirrors remote migrations `20260928075743_foundation_security`, `20260928075919_core_order_schema`, and `20260928075939_print_job_asset_indexes`.
+- Asset relationships intentionally use `assets.order_item_id`; the current item asset is resolved by `order_item_id`, `asset_type`, and `is_current = true` (no circular asset foreign keys on `order_items`).
+
+Tạo:
 
 - Supabase project;
 - Auth;
@@ -1336,9 +1346,9 @@ Táº¡o:
 - payment/artwork/production status;
 - RLS/security.
 
-ChÆ°a ná»‘i production frontend.
+Chưa nối production frontend.
 
-### Phase 2 â€” File Pipeline
+### Phase 2 — File Pipeline
 
 - Drive root;
 - Drive bridge;
@@ -1346,9 +1356,9 @@ ChÆ°a ná»‘i production frontend.
 - artwork upload;
 - metadata sync.
 
-Test báº±ng order giáº£.
+Test bằng order giả.
 
-### Phase 3 â€” Print Generator
+### Phase 3 — Print Generator
 
 Input:
 
@@ -1364,17 +1374,17 @@ A4 PDF
 preview
 ```
 
-Test Ã­t nháº¥t:
+Test ít nhất:
 
 ```text
 1, 2, 3, 5, 6, 7, 12, 13 items
 ```
 
-So vá»›i golden sample `104.pdf`.
+So với golden sample `104.pdf`.
 
-### Phase 4 â€” Magnet Studio V2
+### Phase 4 — Magnet Studio V2
 
-Sá»­a:
+Sửa:
 
 - two modes;
 - crop constraints;
@@ -1383,18 +1393,18 @@ Sá»­a:
 - save correctness;
 - backend contract.
 
-### Phase 5 â€” Order Form V2
+### Phase 5 — Order Form V2
 
 ```text
 Studio
-â†’ Backend
-â†’ Supabase
-â†’ Drive
-â†’ VietQR
-â†’ email
+→ Backend
+→ Supabase
+→ Drive
+→ VietQR
+→ email
 ```
 
-### Phase 6 â€” Admin Dashboard
+### Phase 6 — Admin Dashboard
 
 MVP:
 
@@ -1404,7 +1414,7 @@ MVP:
 - print preview/download;
 - production status.
 
-### Phase 7 â€” Partners
+### Phase 7 — Partners
 
 - partner account;
 - referral;
@@ -1412,7 +1422,7 @@ MVP:
 - payout;
 - portal.
 
-### Phase 8 â€” Events
+### Phase 8 — Events
 
 - quota;
 - guest;
@@ -1424,41 +1434,41 @@ MVP:
 
 ## 34. MVP acceptance test
 
-MVP backend pháº£i pass end-to-end:
+MVP backend phải pass end-to-end:
 
 ```text
 Guest
-â†“
+↓
 Upload 7 images
-â†“
+↓
 Self Service Studio
-â†“
+↓
 Originals saved
-â†“
+↓
 Final artworks saved
-â†“
+↓
 Order created in Supabase
-â†“
+↓
 PAYMENT_PENDING
-â†“
+↓
 Admin marks PAID
-â†“
+↓
 Print Generator
-â†“
+↓
 Page 1 = 6 magnets
 Page 2 = 1 magnet
 5 remaining slots = pure white
-â†“
+↓
 PDF saved to Drive
-â†“
+↓
 Preview saved to Drive
-â†“
+↓
 Admin opens preview/PDF
-â†“
+↓
 Production status can advance
 ```
 
-Náº¿u pipeline nÃ y cháº¡y á»•n thÃ¬ core architecture Ä‘Æ°á»£c coi lÃ  validated.
+Nếu pipeline này chạy ổn thì core architecture được coi là validated.
 
 ---
 
@@ -1486,7 +1496,7 @@ Náº¿u pipeline nÃ y cháº¡y á»•n thÃ¬ core architecture Ä‘Æ°á
 - Event guest full contact info: **YES**
 - Event quota: **YES**
 - Hybrid sponsor + guest-paid overflow: **YES**
-- Print layout: **A4 / 6 per page / 2Ã—3**
+- Print layout: **A4 / 6 per page / 2×3**
 - Print scale: **Actual Size / 100%**
 - Fill order: **ROW-MAJOR**
 - Unused print slots: **PURE WHITE**
@@ -1497,12 +1507,12 @@ Náº¿u pipeline nÃ y cháº¡y á»•n thÃ¬ core architecture Ä‘Æ°á
 
 ## 36. Deferred decisions
 
-ChÆ°a cáº§n khÃ³a ngay:
+Chưa cần khóa ngay:
 
-- email provider cá»¥ thá»ƒ;
+- email provider cụ thể;
 - bank/payment webhook provider;
 - exact SQL types/indexes/RLS;
-- Drive API trá»±c tiáº¿p hay GAS bridge dÃ i háº¡n;
+- Drive API trực tiếp hay GAS bridge dài hạn;
 - optional customer account;
 - exact print generator library/runtime;
 - exact admin UI;
@@ -1515,36 +1525,37 @@ ChÆ°a cáº§n khÃ³a ngay:
 
 ## 37. Next recommended task
 
-### SUNNY-BE-00 â€” Supabase Project & Access Check
+Completed foundation work:
 
-Má»¥c tiÃªu:
+- SUNNY-BE-00 — Supabase Project & Access Check.
+- SUNNY-BE-01 / BE-01R — Backend Core initialization and remote migration mirroring.
 
-1. táº¡o Supabase project sáº¡ch;
-2. xÃ¡c nháº­n account/organization;
-3. xÃ¡c nháº­n ChatGPT connector access;
-4. chÆ°a táº¡o production table;
-5. sau Ä‘Ã³ má»›i viáº¿t schema migration cho:
-   - orders;
-   - order_items;
-   - assets;
-   - print_jobs.
+### SUNNY-BE-02 — Google Drive / File Pipeline
 
-Sau khi Backend Core tá»“n táº¡i má»›i quay láº¡i Magnet Studio V2.
+Scope:
+
+- create Drive root/folder convention;
+- define Drive bridge contract;
+- upload originals;
+- upload final artworks;
+- sync Drive metadata to Supabase assets;
+- no Print Generator yet;
+- no frontend integration yet.
 
 ---
 
 ## 38. Change discipline
 
-Má»—i milestone backend pháº£i:
+Mỗi milestone backend phải:
 
-- pháº¡m vi háº¹p;
-- khÃ´ng mix frontend refactor vá»›i DB migration;
-- cÃ³ diff review;
-- test Ä‘á»™c láº­p;
-- khÃ´ng tá»± Ä‘á»™ng move frontend Ä‘ang cháº¡y;
-- khÃ´ng xÃ³a GAS/Sheet cÅ© trÆ°á»›c khi V2 end-to-end pass;
-- khÃ´ng migrate dá»¯ liá»‡u cÅ© náº¿u chÆ°a cÃ³ yÃªu cáº§u rÃµ rÃ ng;
-- Æ°u tiÃªn rollback dá»….
+- phạm vi hẹp;
+- không mix frontend refactor với DB migration;
+- có diff review;
+- test độc lập;
+- không tự động move frontend đang chạy;
+- không xóa GAS/Sheet cũ trước khi V2 end-to-end pass;
+- không migrate dữ liệu cũ nếu chưa có yêu cầu rõ ràng;
+- ưu tiên rollback dễ.
 
 ---
 
@@ -1554,27 +1565,27 @@ Sunny Magnet V2:
 
 ```text
 Website
-   â”‚
-   â–¼
+   │
+   ▼
 Backend API
-   â”‚
-   â”œâ”€â”€ Supabase = data/auth/business state
-   â”œâ”€â”€ Google Drive = originals/artworks/print files
-   â”œâ”€â”€ Print Generator = A4 production output
-   â”œâ”€â”€ Email provider = transactional email
-   â””â”€â”€ GAS = optional transitional Drive bridge
+   │
+   ├── Supabase = data/auth/business state
+   ├── Google Drive = originals/artworks/print files
+   ├── Print Generator = A4 production output
+   ├── Email provider = transactional email
+   └── GAS = optional transitional Drive bridge
 ```
 
-Retail, Sunny Assist, Partner vÃ  Event dÃ¹ng chung production core:
+Retail, Sunny Assist, Partner và Event dùng chung production core:
 
 ```text
 ORIGINAL
-â†’ ARTWORK
-â†’ READY
-â†’ PRINT JOB
-â†’ PDF
-â†’ PRODUCTION
-â†’ COMPLETED
+→ ARTWORK
+→ READY
+→ PRINT JOB
+→ PDF
+→ PRODUCTION
+→ COMPLETED
 ```
 
-Business layer khÃ¡c nhau nhÆ°ng production engine chá»‰ cÃ³ **má»™t**.
+Business layer khác nhau nhưng production engine chỉ có **một**.
